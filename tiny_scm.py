@@ -48,6 +48,8 @@ def read_eval_print_loop(env, infile_lines=None, interactive=False,
     if startup:
         for filename in load_files:
             scheme_load(filename, True, env)
+    # Initialize a tokenizer instance
+    tokenizer = Tokenizer()
     while True:
         try:
             # Open/Reopen a input stream with 'scm> ' as the input prompt,
@@ -55,8 +57,6 @@ def read_eval_print_loop(env, infile_lines=None, interactive=False,
             # single-line/multi-line expression
             lines_stream = read_input(infile_lines, input_prompt="scm> ")
 
-            # Initialize a tokenizer
-            tokenizer = Tokenizer()
             # Tokenize the input lines
             lines_stream = (tokenizer.tokenize(line) for line in lines_stream)
 
