@@ -317,9 +317,18 @@ class LambdaProcedure(Procedure):
             repr(self.parameters), repr(self.body), repr(self.env))
 
 
+def is_primitive_procedure(procedure):
+    return isinstance(procedure, PrimitiveProcedure)
+
+
+def is_compound_procedure(procedure):
+    return isinstance(procedure, Procedure)
+
+
 ##############################
 #        Dynamic Scope       #
 ##############################
+
 
 class DLambdaProcedure(Procedure):
     """A procedure defined by a `dlambda` expression, which has dynamic scope.
