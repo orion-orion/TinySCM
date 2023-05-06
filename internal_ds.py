@@ -29,6 +29,10 @@ def repl_str(val):
         return "\"" + repr(val[1:-1])[1:-1] + "\""
     return str(val)
 
+##############################
+#        Pair and List       #
+##############################
+
 
 class Pair:
     """A pair has two instance attributes: first and rest. rest must be a Pair
@@ -117,6 +121,11 @@ class nil:
 # Assignment hides the nil class; there is only one instance, so when we check
 # whether the object is nil later, we always use the `is null` syntax
 nil = nil()
+
+
+##############################
+#         Environment        #
+##############################
 
 
 class Frame:
@@ -213,9 +222,9 @@ class Environment:
         return new_env
 
 
-##############
-# Procedures #
-##############
+##############################
+#         Procedures         #
+##############################
 
 
 class Procedure:
@@ -232,11 +241,11 @@ class PrimitiveProcedure(Procedure):
         self.use_env = use_env
 
     def __str__(self):
-        return '#[{0}]'.format(self.name)
+        return "#[{0}]".format(self.name)
 
     def apply(self, arguments, env):
-        """Apply `self` to `args` in Frame `env`, where `args` is a Scheme
-        list (a Pair instance).
+        """Apply `self` to `arguments` in Frame `env`, where `arguments` is a
+        Scheme list (a Pair instance).
         >>> from tiny_scm import setup_environment
         >>> from internal_ds import Pair, nil
         >>> env =  setup_environment()
@@ -264,3 +273,88 @@ class PrimitiveProcedure(Procedure):
             return []
         else:
             return [arguments.first] + self.flatten(arguments.rest)
+
+
+class LambdaProcedure(Procedure):
+    """A procedure defined by a lambda expression or a define form."""
+    import primitive_procs as pprocs
+
+    def __init__(self, parameters, body, env):
+        """A procedure with formal parameter list parameters (a Scheme list),
+        whose body is the Scheme list `body`, and whose environment is `env`.
+        Note that the `env` is the environment where procedure is defined."""
+        assert isinstance(env, Environment), "env must be of type Environment"
+        self.pprocs.validate_type(parameters, self.pprocs.is_scheme_list,
+                                  0, "LambdaProcedure")
+        self.pprocs.validate_type(
+            body, self.pprocs.is_scheme_list, 1, "LambdaProcedure")
+        self.parameters = parameters
+        self.body = body
+        self.env = env
+
+    def make_call_frame(self, arguments, env):
+        """Make a frame that binds the formal parameters to `arguments`, a
+        Scheme list of values, when a lambda procedure is called. Here the
+        `LambdaProcedure` uses lexically scoping, which means that it uses the
+        environment in which the procedure was defined, i.e. `self.env`.
+        However, with dynamic scoping(as in `DLambdaProcedure`), it uses the
+        environment in which the procedure is called."""
+        return self.env.extend_environment(self.parameters, arguments)
+
+    def __str__(self):
+        return str(Pair("lambda", Pair(self.parameters, self.body)))
+
+    def __repr__(self):
+        return "LambdaProcedure({0}, {1}, {2})".format(
+            repr(self.parameters), repr(self.body), repr(self.env))
+
+
+##############################
+#        Dynamic Scope       #
+##############################
+
+class DLambdaProcedure(Procedure):
+    """A procedure defined by a `dlambda` expression, which has dynamic scope.
+    """
+
+    def __init__(self, parameters, body):
+        """A procedure with formal parameter list parameters (a Scheme list)
+        and Scheme list `body` as its definition."""
+        self.parameters = parameters
+        self.body = body
+
+    def make_call_frame(self, arguments, env):
+        """The same as `make_call_frame()` in `LambdaProcedure`, except for
+        the use of the environment in which the procedure is called."""
+        return env.extend_environment(self.parameters, arguments)
+
+    def __str__(self):
+        return str(Pair("dlambda", Pair(self.parameters, self.body)))
+
+    def __repr__(self):
+        return "DLambdaProcedure({0}, {1})".format(
+            repr(self.parameters), repr(self.body))
+
+
+##############################
+#           Promise          #
+##############################
+
+
+class Promise:
+    """A promise, including an expression and an environment in which it
+    is to be evaluated."""
+
+    def __init__(self, expr, env):
+        self.expr = expr
+        self.env = env
+
+    def __str__(self):
+        return "#[promise ({0}forced)]".format(
+            "not " if self.expr is not None else "")
+
+    def __repr__(self) -> str:
+        if self.expr.first == "define":
+            return self.expr.rest.first.first
+        else:
+            return repr(self.expr)
