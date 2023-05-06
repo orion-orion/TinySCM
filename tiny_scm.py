@@ -109,7 +109,7 @@ def setup_environment():
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="Tiny Scheme Interpreter")
-    parser.add_argument("-load", dest="load", action="store_true",
+    parser.add_argument("--load", dest="load", action="store_true",
                         help="This option causes Scheme to load the files")
     parser.add_argument(dest="filenames", metavar="filename", nargs="*",
                         default=[], help="Scheme files to run")
