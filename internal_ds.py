@@ -226,7 +226,7 @@ class PrimitiveProcedure(Procedure):
     """A Scheme procedure defined as a Python function."""
     import primitive_procs as pprocs
 
-    def __init__(self, fn, name='primitive', use_env=False):
+    def __init__(self, fn, name="primitive", use_env=False):
         self.name = name
         self.fn = fn
         self.use_env = use_env
@@ -240,14 +240,14 @@ class PrimitiveProcedure(Procedure):
         >>> from tiny_scm import setup_environment
         >>> from internal_ds import Pair, nil
         >>> env =  setup_environment()
-        >>> plus = env.frames.first.bindings['+']
+        >>> plus = env.frames.first.bindings["+"]
         >>> twos = Pair(2, Pair(2, nil))
         >>> plus.apply(twos, env)
         4
         """
         if not self.pprocs.is_scheme_list(arguments):
             raise self.pprocs.SchemeError(
-                'arguments are not in a list: {0}'.format(arguments))
+                "arguments are not in a list: {0}".format(arguments))
 
         # Convert a Scheme list to a Python list
         arguments_list = self.flatten(arguments)
@@ -257,7 +257,7 @@ class PrimitiveProcedure(Procedure):
             return self.fn(*arguments_list)
         except TypeError:
             raise self.pprocs.SchemeError(
-                'incorrect number of arguments: {0}'.format(self))
+                "incorrect number of arguments: {0}".format(self))
 
     def flatten(self, arguments):
         if arguments is nil:
