@@ -3,8 +3,9 @@
 import sys
 import argparse
 from primitive_procs import scheme_load, SchemeError, PRIMITIVE_PROCS
-from internal_ds import Environment, PrimitiveProcedure
+from internal_ds import Environment, PrimitiveProcedure, repl_str
 from scm_tokenizer import Tokenizer
+from scm_parser import Parser
 try:
     import readline  # history and arrow keys for CLI
 except ImportError:
@@ -43,26 +44,36 @@ def read_input(infile_lines, input_prompt):
 
 def read_eval_print_loop(env, infile_lines=None, interactive=False,
                          quiet=False, startup=False, load_files=(),
-                         report_errors=False):
+                         report_errors=False, print_ast=False):
     """Read and evaluate input until an end of file or keyboard interrupt."""
     if startup:
         for filename in load_files:
             scheme_load(filename, True, env)
     # Initialize a tokenizer instance
     tokenizer = Tokenizer()
+    # Initialize a parser instance
+    parser = Parser()
     while True:
         try:
-            # Open/Reopen a input stream with 'scm> ' as the input prompt,
-            # each time we open/reopen the stream, we will read a complete
-            # single-line/multi-line expression
+            # Open/Reopen a input stream instance with 'scm> ' as the input
+            # prompt. The stream instance will be used until all the tokens
+            # read are consumed
             lines_stream = read_input(infile_lines, input_prompt="scm> ")
 
             # Tokenize the input lines
             lines_stream = (tokenizer.tokenize(line) for line in lines_stream)
 
-            for line in lines_stream:
-                print(line)
-
+            # Parse a single expression / multiple expressions util all the
+            # tokens are consumed
+            while True:
+                # Parse a complete expression(single-line or multi-line) at a
+                # time
+                ast = parser.parse(lines_stream)
+                if not quiet and print_ast:
+                    print(repl_str(ast))
+                # If all the tokens read are consumed, then break
+                if parser.is_empty():
+                    break
         except (SchemeError, SyntaxError, ValueError, RuntimeError) as err:
             if report_errors:
                 if isinstance(err, SyntaxError):
@@ -114,6 +125,10 @@ def parse_args():
                         help="This option causes Scheme to load the files")
     parser.add_argument(dest="filenames", metavar="filename", nargs="*",
                         default=[], help="Scheme files to run")
+    parser.add_argument("--ast", dest="ast", action="store_true",
+                        help="This option causes Scheme to print the abstract"
+                        "syntax trees of expressions instead of their"
+                        "evaluation results")
     args = parser.parse_args()
     return args
 
@@ -132,7 +147,8 @@ def main():
 
     the_global_env = setup_environment()
     read_eval_print_loop(env=the_global_env, startup=True,
-                         interactive=interactive, load_files=load_files)
+                         interactive=interactive, load_files=load_files,
+                         print_ast=args.ast)
 
 
 if __name__ == "__main__":
