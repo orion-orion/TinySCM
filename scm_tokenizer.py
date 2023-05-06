@@ -26,7 +26,8 @@ class Tokenizer:
 
     def tokenize(self, line: str):
         """The list of Scheme tokens on line.  Excludes comments and
-        whitespace."""
+        whitespace.
+        """
         result = []
         text, i = self.next_candidate_token(line, 0)
         while text is not None:
@@ -81,7 +82,8 @@ class Tokenizer:
         """A tuple (tok, k'), where tok is the next substring of line at or
         after position k that could be a token (assuming it passes a validity
         check), and k' is the position in line following that token.  Returns
-        (None, len(line)) when there are no more tokens."""
+        (None, len(line)) when there are no more tokens.
+        """
         while k < len(line):
             c = line[k]
             if c == ";":

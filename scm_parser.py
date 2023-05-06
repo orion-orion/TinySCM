@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """The `Parser` class provides method `parse` for converting tokens of a
-complete expression(single-line or multi-line) into abstract syntax tree.
+complete expression (single-line or multi-line) into abstract syntax tree.
 """
 from internal_ds import Pair, nil
 
@@ -24,11 +24,14 @@ class Parser:
             self.read_line(self.lines_stream)
 
     def is_empty(self):
-        # current_line里的token消化完了，说明需要出现scm>提示，从input中读了
+        """Indicated whether the tokens in `current_line` are all consumed. If
+        so, the `scm> ` prompt needs to appear and a new round of input is
+        required.
+        """
         return not self.current_line
 
     def parse(self, lines_stream):
-        """Parse a complete expression(single-line or multi-line) from
+        """Parses a complete expression (single-line or multi-line) from
         `lines_stream`, a generator of lines.
 
         >>> from scm_tokenizer import Tokenizer
@@ -49,7 +52,7 @@ class Parser:
 
     def expr(self):
         """Returns the parsing result of the next complete expression (single-
-        line or multi-lines)
+        line or multi-lines).
         """
         self.read_until_not_empty()
 

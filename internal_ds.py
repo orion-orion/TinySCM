@@ -18,7 +18,8 @@ would be read to the value, where possible.
 
 
 def repl_str(val):
-    """Should largely match str(val), except for booleans and undefined."""
+    """Should largely match string (`val`), except for booleans and undefined.
+    """
     if val is True:
         return "#t"
     if val is False:
@@ -90,7 +91,8 @@ class Pair:
 
     def flatmap(self, fn):
         """Returns a Scheme list after flatmapping Python function `fn` to
-        `self`."""
+        `self`.
+        """
         from primitive_procs import scheme_append
         mapped = fn(self.first)
         if self.rest is nil or isinstance(self.rest, Pair):
@@ -168,7 +170,8 @@ class Environment:
 
     def lookup_variable_value(self, var):
         """Returns the value bound to variable. Errors if variable is not
-        found."""
+        found.
+        """
         def env_loop(frames):
             # If cannot find the variable in the current environment
             if self.pprocs.is_scheme_null(frames):
@@ -184,7 +187,8 @@ class Environment:
     @ staticmethod
     def make_frame(vars, vals):
         """Returns a new frame containing the bindings of the variables and
-        values."""
+        values.
+        """
         frame = Frame()
         while isinstance(vars, Pair):
             var = vars.first
@@ -200,6 +204,7 @@ class Environment:
         bounded to the Scheme values in the Scheme list `vals`. Both
         parameters and `vals` are represented as Pairs. Raise an error if too
         many or too few vals are given.
+
         >>> from tiny_scm import setup_environment
         >>> from primitive_procs import scheme_list
         >>> env = setup_environment()
@@ -246,6 +251,7 @@ class PrimitiveProcedure(Procedure):
     def apply(self, arguments, env):
         """Applies `self` to `arguments` in Frame `env`, where `arguments` is a
         Scheme list (a Pair instance).
+
         >>> from tiny_scm import setup_environment
         >>> from internal_ds import Pair, nil
         >>> env =  setup_environment()
@@ -282,7 +288,8 @@ class LambdaProcedure(Procedure):
     def __init__(self, parameters, body, env):
         """A procedure with formal parameter list parameters (a Scheme list),
         whose body is the Scheme list `body`, and whose environment is `env`.
-        Note that the `env` is the environment where procedure is defined."""
+        Note that the `env` is the environment where procedure is defined.
+        """
         assert isinstance(env, Environment), "env must be of type Environment"
         self.pprocs.validate_type(parameters, self.pprocs.is_scheme_list,
                                   0, "LambdaProcedure")
@@ -297,8 +304,9 @@ class LambdaProcedure(Procedure):
         Scheme list of values, when a lambda procedure is called. Here the
         `LambdaProcedure` uses lexically scoping, which means that it uses the
         environment in which the procedure was defined, i.e. `self.env`.
-        However, with dynamic scoping(as in `DLambdaProcedure`), it uses the
-        environment in which the procedure is called."""
+        However, with dynamic scoping (as in `DLambdaProcedure`), it uses the
+        environment in which the procedure is called.
+        """
         return self.env.extend_environment(self.parameters, arguments)
 
     def __str__(self):
@@ -319,13 +327,15 @@ class DLambdaProcedure(Procedure):
 
     def __init__(self, parameters, body):
         """A procedure with formal parameter list parameters (a Scheme list)
-        and Scheme list `body` as its definition."""
+        and Scheme list `body` as its definition.
+        """
         self.parameters = parameters
         self.body = body
 
     def make_call_frame(self, arguments, env):
         """The same as `make_call_frame()` in `LambdaProcedure`, except for
-        the use of the environment in which the procedure is called."""
+        the use of the environment in which the procedure is called.
+        """
         return env.extend_environment(self.parameters, arguments)
 
     def __str__(self):
@@ -342,8 +352,9 @@ class DLambdaProcedure(Procedure):
 
 
 class Promise:
-    """A promise, including an expression and an environment in which it
-    is to be evaluated."""
+    """A promise, including an expression and an environment in which it is to
+    be evaluated.
+    """
 
     def __init__(self, expr, env):
         self.expr = expr

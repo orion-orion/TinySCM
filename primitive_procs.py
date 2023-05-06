@@ -24,7 +24,8 @@ def primitive(name, use_env=False):
     """`primitive` is a factory function, which can accepet arguments and
     returns a python decorator `add`. The function `add` add triples (<python
     function>, <function name>, <whether to use the environment>) into list
-    `PRIMITIVE_PROCS`."""
+    `PRIMITIVE_PROCS`.
+    """
     def add(fn):
         PRIMITIVE_PROCS.append((fn, name, use_env))
         return fn
@@ -32,8 +33,9 @@ def primitive(name, use_env=False):
 
 
 def validate_type(val, predicate, k, name):
-    """Return `val`.  Raises a SchemeError if `not predicate(val)`
-    using "argument <k> of <name>" to describe the offending value."""
+    """Returns `val`.  Raises a SchemeError if `not predicate(val)`
+    using "argument <k> of <name>" to describe the offending value.
+    """
     if not predicate(val):
         msg = "argument {0} of {1} has wrong type ({2})"
         type_name = type(val).__name__
@@ -73,7 +75,8 @@ def scheme_exit():
 
 def scheme_open(filename):
     """If either "<filename>" or "<filename>.scm" is the name of a valid file,
-    return a Python file opened to it. Otherwise, raise an error."""
+    return a Python file opened to it. Otherwise, raise an error.
+    """
     try:
         return open(filename)
     except IOError as exc:
@@ -87,10 +90,11 @@ def scheme_open(filename):
 
 @primitive("load", use_env=True)
 def scheme_load(*args):
-    """Load a Scheme source file. `args` should be of the form (<symol>,
+    """Loads a Scheme source file. `args` should be of the form (<symol>,
     <environment>) or (<symbol>, <quiet>, <environment>). The file named
     `symbol` is loaded into Frame `env`, with verbosity determined by `quiet`
-    (default true)."""
+    (default true).
+    """
     from tiny_scm import read_eval_print_loop
     if not (2 <= len(args) <= 3):
         expressions = args[:-1]
@@ -111,7 +115,8 @@ def scheme_load(*args):
 
 @primitive("load-all", use_env=True)
 def scheme_load_all(directory, env):
-    """Load all ".scm" files in the given directory, alphabetically."""
+    """Loads all ".scm" files in the given directory, alphabetically.
+    """
     assert is_scheme_string(directory)
     directory = directory[1:-1]
     for x in sorted(os.listdir(".")):
@@ -171,7 +176,7 @@ def is_scheme_integer(x):
 
 @primitive("list?")
 def is_scheme_list(x):
-    """Return whether x is a well-formed Scheme list. Assumes no cycles."""
+    """Returns whether x is a well-formed Scheme list. Assumes no cycles."""
     while x is not nil:
         if not isinstance(x, Pair):
             return False
@@ -284,7 +289,7 @@ def scheme_list(*vals):
 
 
 def _check_nums(*vals):
-    """Check that all arguments in `vals` are Scheme numbers."""
+    """Checks that all arguments in `vals` are Scheme numbers."""
     for i, v in enumerate(vals):
         if not is_scheme_number(v):
             msg = "operand {0} ({1}) is not a number"
@@ -292,8 +297,9 @@ def _check_nums(*vals):
 
 
 def _arith(fn, init, vals):
-    """Perform the `fn` operation on the number values of `vals`, with `init`
-    as the value when `vals` is empty. Returns the result as a Scheme value."""
+    """Performs the `fn` operation on the number values of `vals`, with `init`
+    as the value when `vals` is empty. Returns the result as a Scheme value.
+    """
     _check_nums(*vals)
     s = init
     for val in vals:
@@ -380,7 +386,8 @@ def scheme_remainder(val0, val1):
 
 def number_fn(module, name, fallback=None):
     """A Scheme primitive procedure that calls the numeric Python function
-    named `module.name`."""
+    named `module.name`.
+    """
     py_fn = getattr(module, name) if fallback is None else getattr(
         module, name, fallback)
 

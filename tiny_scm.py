@@ -21,13 +21,13 @@ if sys.version_info[0] < 3:  # Python 2 compatibility
             raise EOFError()
         return line.rstrip('\r\n')
 
-################
-# Input/Output #
-################
+##############################
+#        Input / Output      #
+##############################
 
 
 def read_input(infile_lines, input_prompt):
-    """Read the input lines."""
+    """Reads the input lines."""
     if infile_lines:  # If use a file stream as input
         while infile_lines:
             line = infile_lines.pop(0).strip("\n")
@@ -45,7 +45,7 @@ def read_input(infile_lines, input_prompt):
 def read_eval_print_loop(env, infile_lines=None, interactive=False,
                          quiet=False, startup=False, load_files=(),
                          report_errors=False, print_ast=False):
-    """Read and evaluate input until an end of file or keyboard interrupt."""
+    """Reads and evaluates input until an end of file or keyboard interrupt."""
     if startup:
         for filename in load_files:
             scheme_load(filename, True, env)
@@ -66,7 +66,7 @@ def read_eval_print_loop(env, infile_lines=None, interactive=False,
             # Parse a single expression / multiple expressions util all the
             # tokens are consumed
             while True:
-                # Parse a complete expression(single-line or multi-line) at a
+                # Parse a complete expression (single-line or multi-line) at a
                 # time
                 ast = parser.parse(lines_stream)
                 if not quiet and print_ast:
@@ -100,7 +100,7 @@ def read_eval_print_loop(env, infile_lines=None, interactive=False,
 
 
 def add_primitives(env, funcs_and_names):
-    """Enter bindings in `funcs_and_names` into `env`, an environment,
+    """Enters bindings in `funcs_and_names` into `env`, an environment,
     as primitive procedures. Each item in `funcs_and_names` has the form
     (<python function>, <function name>, <whether to use the environment>).
     """
@@ -110,8 +110,9 @@ def add_primitives(env, funcs_and_names):
 
 
 def setup_environment():
-    """Initialize and return a single-frame environment including symbols
-    associated with the primitive procedures."""
+    """Initializes and returns a single-frame environment including symbols
+    associated with the primitive procedures.
+    """
     initial_env = Environment()
     initial_env.define_variable("undefined", None)
     add_primitives(initial_env, PRIMITIVE_PROCS)
@@ -119,7 +120,7 @@ def setup_environment():
 
 
 def parse_args():
-    """Parse command line arguments."""
+    """Parses command line arguments."""
     parser = argparse.ArgumentParser(description="Tiny Scheme Interpreter")
     parser.add_argument("--load", dest="load", action="store_true",
                         help="This option causes Scheme to load the files")
