@@ -55,8 +55,9 @@ def read_eval_print_loop(env, infile_lines=None, interactive=False,
             # single-line/multi-line expression
             lines_stream = read_input(infile_lines, input_prompt="scm> ")
 
-            # tokenize the input lines
+            # Initialize a tokenizer
             tokenizer = Tokenizer()
+            # Tokenize the input lines
             lines_stream = (tokenizer.tokenize(line) for line in lines_stream)
 
             for line in lines_stream:

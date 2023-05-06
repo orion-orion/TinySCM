@@ -1,6 +1,20 @@
 # -*- coding: utf-8 -*-
 """This module implements the internal data structures of the Scheme
-language."""
+language.
+
+In addition to the internal data stuctures defined in this file, some data
+types in Scheme are represented by their corresponding type in Python:
+    number:       int or float
+    symbol:       string
+    boolean:      bool
+    unspecified:  None
+
+The __repr__ method of a Scheme value will return a Python expression that
+would be evaluated to the value, where possible.
+
+The __str__ method of a Scheme value will return a Scheme expression that
+would be read to the value, where possible.
+"""
 
 
 def repl_str(val):

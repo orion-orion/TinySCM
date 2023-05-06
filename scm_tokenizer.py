@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""The tokenizer class provides method tokenize for converting a string into
-a list of tokens. A token may be:
+"""The `Tokenizer` class provides method `tokenize` for converting a string
+into a list of tokens. A token may be:
 
   * A number (represented as an int or float)
   * A boolean (represented as a bool)
@@ -13,7 +13,6 @@ in the course, such as Scheme strings.
 
 
 class Tokenizer:
-
     _NUMERAL_STARTS = set("0123456789") | set("+-.")
     _SYMBOL_CHARS = (set("!$%&*/:<=>?@^_~") | set("abcdefghijklmnopqrstuvwxyz")
                      | set("ABCDEFGHIJKLMNOPQRSTUVWXYZ") | _NUMERAL_STARTS)
