@@ -80,7 +80,7 @@ class Pair:
         return self.first == p.first and self.rest == p.rest
 
     def map(self, fn):
-        """Return a Scheme list after mapping Python function `fn` to `self`.
+        """Returns a Scheme list after mapping Python function `fn` to `self`.
         """
         mapped = fn(self.first)
         if self.rest is nil or isinstance(self.rest, Pair):
@@ -89,7 +89,7 @@ class Pair:
             raise TypeError("ill-formed list (cdr is a promise)")
 
     def flatmap(self, fn):
-        """Return a Scheme list after flatmapping Python function `fn` to
+        """Returns a Scheme list after flatmapping Python function `fn` to
         `self`."""
         from primitive_procs import scheme_append
         mapped = fn(self.first)
@@ -162,12 +162,12 @@ class Environment:
         return env_loop_repr(self.frames)
 
     def define_variable(self, var, val):
-        """Define Scheme variable to have value."""
+        """Defines Scheme variable to have value."""
         frame = self.frames.first
         frame.add_binding(var, val)
 
     def lookup_variable_value(self, var):
-        """Return the value bound to variable. Errors if variable is not
+        """Returns the value bound to variable. Errors if variable is not
         found."""
         def env_loop(frames):
             # If cannot find the variable in the current environment
@@ -183,7 +183,7 @@ class Environment:
 
     @ staticmethod
     def make_frame(vars, vals):
-        """Return a new frame containing the bindings of the variables and
+        """Returns a new frame containing the bindings of the variables and
         values."""
         frame = Frame()
         while isinstance(vars, Pair):
@@ -195,7 +195,7 @@ class Environment:
         return frame
 
     def extend_environment(self, vars, vals):
-        """Return a new environment containing a new frame, in which the
+        """Returns a new environment containing a new frame, in which the
         symbols in a Scheme list `vars` of formal parameters parameters are
         bounded to the Scheme values in the Scheme list `vals`. Both
         parameters and `vals` are represented as Pairs. Raise an error if too
@@ -244,7 +244,7 @@ class PrimitiveProcedure(Procedure):
         return "#[{0}]".format(self.name)
 
     def apply(self, arguments, env):
-        """Apply `self` to `arguments` in Frame `env`, where `arguments` is a
+        """Applies `self` to `arguments` in Frame `env`, where `arguments` is a
         Scheme list (a Pair instance).
         >>> from tiny_scm import setup_environment
         >>> from internal_ds import Pair, nil
@@ -293,7 +293,7 @@ class LambdaProcedure(Procedure):
         self.env = env
 
     def make_call_frame(self, arguments, env):
-        """Make a frame that binds the formal parameters to `arguments`, a
+        """Makes a frame that binds the formal parameters to `arguments`, a
         Scheme list of values, when a lambda procedure is called. Here the
         `LambdaProcedure` uses lexically scoping, which means that it uses the
         environment in which the procedure was defined, i.e. `self.env`.

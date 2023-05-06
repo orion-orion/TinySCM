@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
-"""This module implements the primitive procedures of the Scheme language."""
+"""This module implements the primitive procedures of the Scheme language.
+You can refer to:
+https://inst.eecs.berkeley.edu/~cs61a/fa16/articles/scheme-primitives.html"""
+import math
 import numbers
 import operator
-from internal_ds import Pair, nil
+import sys
+import os
+from internal_ds import Pair, nil, repl_str
 
 
 class SchemeError(Exception):
@@ -38,9 +43,32 @@ def validate_type(val, predicate, k, name):
     return val
 
 
-####################
-# Core Interpreter #
-####################
+##############################
+#       Core Interpreter     #
+##############################
+
+@primitive("display")
+def scheme_display(*vals):
+    vals = [repl_str(val[1:-1] if is_scheme_string(val) else val)
+            for val in vals]
+    print(*vals, end="")
+
+
+@primitive("displayln")
+def scheme_displayln(*vals):
+    scheme_display(*vals)
+    scheme_newline()
+
+
+@primitive("error")
+def scheme_error(msg=None):
+    msg = "" if msg is None else repl_str(msg)
+    raise SchemeError(msg)
+
+
+@primitive("exit")
+def scheme_exit():
+    raise EOFError
 
 
 def scheme_open(filename):
@@ -83,25 +111,62 @@ def scheme_load(*args):
 
 @primitive("load-all", use_env=True)
 def scheme_load_all(directory, env):
-    """
-    Load all ".scm" files in the given directory, alphabetically.
-    """
+    """Load all ".scm" files in the given directory, alphabetically."""
     assert is_scheme_string(directory)
     directory = directory[1:-1]
-    import os
     for x in sorted(os.listdir(".")):
         if not x.endswith(".scm"):
             continue
         scheme_load(x, env)
 
-####################
-#   Type Checking  #
-####################
+
+@primitive("newline")
+def scheme_newline():
+    print()
+    sys.stdout.flush()
+
+
+@primitive("print")
+def scheme_print(*vals):
+    vals = [repl_str(val) for val in vals]
+    print(*vals)
+
+
+@primitive("print-then-return")
+def scheme_print_return(val1, val2):
+    print(repl_str(val1))
+    return val2
+
+##############################
+#        Type Checking       #
+##############################
+
+
+def is_scheme_true(val):
+    """All values in Scheme are true except False."""
+    return val is not False
+
+
+def is_scheme_false(val):
+    """Only False is false in scheme_reader."""
+    return val is False
+
+
+@primitive("atom?")
+def is_scheme_atom(x):
+    return (is_scheme_boolean(x) or is_scheme_number(x) or
+            is_scheme_symbol(x) or is_scheme_null(x) or is_scheme_string(x))
 
 
 @primitive("boolean?")
 def is_scheme_boolean(x):
     return x is True or x is False
+
+
+@primitive("integer?")
+def is_scheme_integer(x):
+    return is_scheme_number(x) and (isinstance(x, numbers.Integral) or int(x)
+                                    == x)
 
 
 @primitive("list?")
@@ -136,6 +201,17 @@ def is_scheme_pair(x):
     return isinstance(x, Pair)
 
 
+@primitive("procedure?")
+def is_scheme_procedure(x):
+    from internal_ds import Procedure
+    return isinstance(x, Procedure)
+
+
+@primitive("scheme-valid-cdr?")
+def is_scheme_valid_cdr(x):
+    return is_scheme_pair(x) or is_scheme_null(x)
+
+
 @primitive("string?")
 def is_scheme_string(x):
     return isinstance(x, str) and x.startswith("\"")
@@ -146,9 +222,9 @@ def is_scheme_symbol(x):
     return isinstance(x, str) and not is_scheme_string(x)
 
 
-################################
-#  Pair and List Manipulation  #
-################################
+##############################
+# Pair and List Manipulation #
+##############################
 
 
 @primitive("append")
@@ -170,9 +246,29 @@ def scheme_append(*vals):
     return result
 
 
+@primitive("car")
+def scheme_car(x):
+    validate_type(x, is_scheme_pair, 0, "car")
+    return x.first
+
+
+@primitive("cdr")
+def scheme_cdr(x):
+    validate_type(x, is_scheme_pair, 0, "cdr")
+    return x.rest
+
+
 @primitive("cons")
 def scheme_cons(x, y):
     return Pair(x, y)
+
+
+@primitive("length")
+def scheme_length(x):
+    validate_type(x, is_scheme_list, 0, "length")
+    if x is nil:
+        return 0
+    return len(x)
 
 
 @primitive("list")
@@ -182,9 +278,9 @@ def scheme_list(*vals):
         result = Pair(e, result)
     return result
 
-#########################
-# Arithmetic Operations #
-#########################
+##############################
+#    Arithmetic Operations   #
+##############################
 
 
 def _check_nums(*vals):
@@ -215,3 +311,202 @@ def _ensure_int(x):
 @primitive("+")
 def scheme_add(*vals):
     return _arith(operator.add, 0, vals)
+
+
+@primitive("-")
+def scheme_sub(val0, *vals):
+    _check_nums(val0, *vals)  # fixes off-by-one error
+    if len(vals) == 0:
+        return _ensure_int(-val0)
+    return _arith(operator.sub, val0, vals)
+
+
+@primitive("*")
+def scheme_mul(*vals):
+    return _arith(operator.mul, 1, vals)
+
+
+@primitive("/")
+def scheme_div(val0, *vals):
+    _check_nums(val0, *vals)  # fixes off-by-one error
+    try:
+        if len(vals) == 0:
+            return _ensure_int(operator.truediv(1, val0))
+        return _arith(operator.truediv, val0, vals)
+    except ZeroDivisionError as err:
+        raise SchemeError(err)
+
+
+@primitive("abs")
+def scheme_abs(val0):
+    return abs(val0)
+
+
+@primitive("expt")
+def scheme_expt(val0, val1):
+    _check_nums(val0, val1)
+    return pow(val0, val1)
+
+
+@primitive("modulo")
+def scheme_modulo(val0, val1):
+    _check_nums(val0, val1)
+    try:
+        return val0 % val1
+    except ZeroDivisionError as err:
+        raise SchemeError(err)
+
+
+@primitive("quotient")
+def scheme_quo(val0, val1):
+    _check_nums(val0, val1)
+    try:
+        return -(-val0 // val1) if (val0 < 0) ^ (val1 < 0) else val0 // val1
+    except ZeroDivisionError as err:
+        raise SchemeError(err)
+
+
+@primitive("remainder")
+def scheme_remainder(val0, val1):
+    _check_nums(val0, val1)
+    try:
+        result = val0 % val1
+    except ZeroDivisionError as err:
+        raise SchemeError(err)
+    while result < 0 and val0 > 0 or result > 0 and val0 < 0:
+        result -= val1
+    return result
+
+
+def number_fn(module, name, fallback=None):
+    """A Scheme primitive procedure that calls the numeric Python function
+    named `module.name`."""
+    py_fn = getattr(module, name) if fallback is None else getattr(
+        module, name, fallback)
+
+    def scheme_fn(*vals):
+        _check_nums(*vals)
+        return py_fn(*vals)
+    return scheme_fn
+
+
+# Additional Math Primitives
+
+
+# Add number functions in the math module as primitive procedures in Scheme
+for _name in ["acos", "acosh", "asin", "asinh", "atan", "atan2", "atanh",
+              "ceil", "copysign", "cos", "cosh", "degrees", "floor", "log",
+              "log10", "log1p", "radians", "sin", "sinh", "sqrt",
+              "tan", "tanh", "trunc"]:
+    primitive(_name)(number_fn(math, _name))
+# Python 2 compatibility
+primitive("log2")(number_fn(math, "log2", lambda x: math.log(x, 2)))
+
+
+##############################
+#      Boolean Operations    #
+##############################
+
+# General
+
+@primitive("eq?")
+def is_scheme_eq(x, y):
+    if is_scheme_symbol(x) and is_scheme_symbol(y):
+        return x == y
+    else:
+        return x is y
+
+
+@primitive("equal?")
+def is_scheme_equal(x, y):
+    if is_scheme_pair(x) and is_scheme_pair(y):
+        return is_scheme_equal(x.first, y.first) \
+            and is_scheme_equal(x.rest, y.rest)
+    elif is_scheme_number(x) and is_scheme_number(y):
+        return x == y
+    else:
+        return type(x) == type(y) and x == y
+
+
+@primitive("eqv?")
+def is_scheme_eqv(x, y):
+    if is_scheme_number(x) and is_scheme_number(y):
+        return x == y
+    elif is_scheme_symbol(x) and is_scheme_symbol(y):
+        return x == y
+    else:
+        return x is y
+
+
+@primitive("not")
+def scheme_not(x):
+    return not is_scheme_true(x)
+
+
+# On Numbers
+
+
+def _numcomp(op, x, y):
+    _check_nums(x, y)
+    return op(x, y)
+
+
+@primitive("=")
+def scheme_eq(x, y):
+    return _numcomp(operator.eq, x, y)
+
+
+@primitive("<")
+def scheme_lt(x, y):
+    return _numcomp(operator.lt, x, y)
+
+
+@primitive(">")
+def scheme_gt(x, y):
+    return _numcomp(operator.gt, x, y)
+
+
+@primitive("<=")
+def scheme_le(x, y):
+    return _numcomp(operator.le, x, y)
+
+
+@primitive(">=")
+def scheme_ge(x, y):
+    return _numcomp(operator.ge, x, y)
+
+
+@primitive("even?")
+def is_scheme_even(x):
+    _check_nums(x)
+    return x % 2 == 0
+
+
+@primitive("odd?")
+def is_scheme_odd(x):
+    _check_nums(x)
+    return x % 2 == 1
+
+
+@primitive("zero?")
+def is_scheme_zero(x):
+    _check_nums(x)
+    return x == 0
+
+
+##############################
+#       Mutation Extras      #
+##############################
+
+
+@primitive("set-car!")
+def scheme_set_car(x, y):
+    validate_type(x, is_scheme_pair, 0, "set-car!")
+    x.first = y
+
+
+@primitive("set-cdr!")
+def scheme_set_cdr(x, y):
+    validate_type(x, is_scheme_pair, 0, "set-cdr!")
+    validate_type(y, is_scheme_valid_cdr, 1, "set-cdr!")
+    x.rest = y
