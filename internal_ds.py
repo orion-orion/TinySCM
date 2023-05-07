@@ -139,6 +139,9 @@ class Frame:
     def add_binding(self, var, val):
         self.bindings[var] = val
 
+    def set_var(self, var, val):
+        self.add_binding(var, val)
+
     def __repr__(self):
         s = sorted(["{0}: {1}".format(k, v)
                    for k, v in self.bindings.items()])
@@ -167,6 +170,22 @@ class Environment:
         """Defines Scheme variable to have value."""
         frame = self.frames.first
         frame.add_binding(var, val)
+
+    def set_variable_value(self, var, val):
+        """Set Scheme variable to have value."""
+        def env_loop(frames):
+            # 空表
+            if self.pprocs.is_scheme_null(frames):
+                raise self.pprocs.SchemeError(
+                    'Unbound variable: {0}'.format(var))
+            frame = frames.first
+            if var in frame.bindings.keys():
+                frame.set_var(var, val)
+                return
+            else:
+                env_loop(frames.rest)
+
+        env_loop(self.frames)
 
     def lookup_variable_value(self, var):
         """Returns the value bound to variable. Errors if variable is not
@@ -205,8 +224,6 @@ class Environment:
         parameters and `vals` are represented as Pairs. Raise an error if too
         many or too few vals are given.
 
-        >>> from tiny_scm import setup_environment
-        >>> from primitive_procs import scheme_list
         >>> env = setup_environment()
         >>> parameters, expressions = scheme_list("a", "b", "c"), \
                                       scheme_list(1, 2, 3)
@@ -252,8 +269,6 @@ class PrimitiveProcedure(Procedure):
         """Applies `self` to `arguments` in Frame `env`, where `arguments` is a
         Scheme list (a Pair instance).
 
-        >>> from tiny_scm import setup_environment
-        >>> from internal_ds import Pair, nil
         >>> env =  setup_environment()
         >>> plus = env.frames.first.bindings["+"]
         >>> twos = Pair(2, Pair(2, nil))
