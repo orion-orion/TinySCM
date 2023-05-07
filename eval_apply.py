@@ -638,20 +638,29 @@ scheme_eval = optimize_tail_calls(scheme_eval)
 
 
 SPECIAL_FORMS = {
-    "quote": eval_quote,
-    "define": eval_definition,
+    # Conditionals
     "if": eval_if,
-    "set!": eval_assignment,
-    "lambda": eval_lambda,
-    "begin": eval_begin,
     "cond": eval_cond,
-    'and': eval_and,
-    'let': eval_let,
-    'or': eval_or,
-    'dlambda': eval_dlambda_form,
-    'define-macro': eval_macro_definition,
-    'quasiquote': eval_quasiquote,
-    'unquote': eval_unquote,
-    'delay': eval_delay,
-    'cons-stream': eval_cons_stream
+    "and": eval_and,
+    "or": eval_or,
+    # Sequencing
+    "begin": eval_begin,
+    "let": eval_let,
+    # Assignments
+    "set!": eval_assignment,
+    # Definitions
+    "define": eval_definition,
+    # Lambda expressions
+    "lambda": eval_lambda,
+    # Quoting
+    "quote": eval_quote,
+    "unquote": eval_unquote,
+    "quasiquote": eval_quasiquote,
+    # Dynamic scoping
+    "dlambda": eval_dlambda_form,
+    # Macro
+    "define-macro": eval_macro_definition,
+    # Stream
+    "delay": eval_delay,
+    "cons-stream": eval_cons_stream
 }
