@@ -638,3 +638,47 @@ x
 
 (exit)
 
+; macro tests
+
+(define (map f lst)
+(if (null? lst)
+    nil
+    (cons
+        (f (car lst))
+        (map f (cdr lst)))))
+
+(define-macro (for formal iterable body)
+     (list 'map (list 'lambda (list formal) body) iterable))
+
+(for i '(1 2 3)
+(if (= i 1)
+    0
+    i))
+; expect (0 2 3)
+
+(define (cadr s) (car (cdr s)))
+(define (cars s) (map car s))
+(define (cadrs s) (map cadr s))
+
+(define-macro (leet bindings expr)
+(cons
+    (list 'lambda (cars bindings) expr)
+    (cadrs bindings)))
+
+(define (square x) (* x x))
+(define (hyp a b)
+(leet ((a2 (square a)) (b2 (square b))) (sqrt (+ a2 b2))))
+
+(hyp 3 4)
+; expect 5.000023178253949
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Tests from Doctests ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-macro (f x) (car x))
+; expect f
+(f (1 2))
+; expect 1

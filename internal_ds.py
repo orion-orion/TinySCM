@@ -369,6 +369,16 @@ class DLambdaProcedure(Procedure):
         return "DLambdaProcedure({0}, {1})".format(
             repr(self.parameters), repr(self.body))
 
+##############################
+#            Macro           #
+##############################
+
+
+class MacroProcedure(LambdaProcedure):
+    """A macro: a special form that operates on its unevaluated operands to
+    create an expression that is evaluated in place of a call.
+    """
+
 
 ##############################
 #           Promise          #
@@ -393,3 +403,12 @@ class Promise:
             return self.expr.rest.first.first
         else:
             return repr(self.expr)
+
+
+##############################
+#        Tail Recursion      #
+##############################
+
+
+class TailPromise(Promise):
+    """An expression and an environment in which it is to be evaluated."""

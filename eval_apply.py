@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 """This module implements the eval-apply cycle of the Scheme interpreter.
 """
-from internal_ds import repl_str, Pair, nil, LambdaProcedure, \
-    DLambdaProcedure, Promise, is_primitive_procedure, is_compound_procedure
+from internal_ds import repl_str, Pair, nil, LambdaProcedure, MacroProcedure, \
+    DLambdaProcedure, Promise, TailPromise, is_primitive_procedure, \
+    is_compound_procedure
 from primitive_procs import SchemeError, primitive, is_scheme_true, \
     is_scheme_false, is_scheme_boolean, is_scheme_list, is_scheme_number, \
     is_scheme_null, is_scheme_pair, is_scheme_string, is_scheme_symbol, \
@@ -44,6 +45,9 @@ def scheme_eval(expr, env, _=None):
     # Evaluate an application
     else:
         operator = scheme_eval(first, env)
+        # Check if the operator is a macro
+        if isinstance(operator, MacroProcedure):
+            return scheme_eval(complete_apply(operator, rest, env), env)
         operands = rest.map(lambda x: scheme_eval(x, env))
         return scheme_apply(operator, operands, env)
 
@@ -534,10 +538,66 @@ def eval_dlambda_form(expr, env):
     validate_parameters(parameters)
     return DLambdaProcedure(parameters, expr.rest)
 
+##############################
+#            Macro           #
+##############################
+
+
+def eval_macro_definition(expr, env):
+    """Evaluate a define-macro form.
+
+    >>> env = setup_environment()
+    >>> eval_macro_definition(parser.parse(iter([tokenizer.tokenize("((f x) ( \
+    ... car x))")])), env)
+    'f'
+    >>> scheme_eval(parser.parse(iter([tokenizer.tokenize("(f (1 2))")])), env)
+    1
+
+    About macro, you can refer to:
+    https://liujiacai.net/blog/2017/08/31/master-macro-theory/  
+    """
+    validate_form(expr, min=2)
+    target = expr.first
+    if isinstance(target, Pair) and is_scheme_symbol(target.first):
+        func_name = target.first
+        # `target.rest` is parameters，not `target.rest.first`
+        parameters = target.rest
+        body = expr.rest
+        # Just store the expression, rather than evaluate it
+        env.define_variable(func_name, MacroProcedure(parameters, body, env))
+        return func_name
+    else:
+        raise SchemeError("Invalid use of macro")
+
 
 ##############################
-#    Tail Call Optimization  #
+#           Stream           #
 ##############################
+
+def eval_delay(expr, env):
+    """Evaluates a delay form."""
+    validate_form(expr, 1, 1)
+    return Promise(expr.first, env)
+
+
+def eval_cons_stream(expr, env):
+    """Evaluates a cons-stream form."""
+    validate_form(expr, 2, 2)
+    return Pair(scheme_eval(expr.first, env), Promise(expr.rest.first, env))
+
+
+##############################
+#   Tail Call Optimization   #
+##############################
+
+
+def complete_apply(procedure, args, env):
+    """Apply procedure to args in env; ensure the result is not a Thunk."""
+    val = scheme_apply(procedure, args, env)
+    if isinstance(val, TailPromise):
+        return scheme_eval(val.expr, val.env)
+    else:
+        return val
 
 
 def optimize_tail_calls(original_scheme_eval):
@@ -556,12 +616,12 @@ def optimize_tail_calls(original_scheme_eval):
         # call, that is, when the recursion depth is 1
         if tail and not is_scheme_variable(expr) and not is_self_evaluating(
                 expr):
-            return Promise(expr, env)
+            return TailPromise(expr, env)
 
         # If tail is False or the expression is not self-evaluated, it will be
         # evaluated until the actual value is obtained (instead of Promise)
-        result = Promise(expr, env)
-        while (isinstance(result, Promise)):
+        result = TailPromise(expr, env)
+        while (isinstance(result, TailPromise)):
             result = original_scheme_eval(result.expr, result.env)
         return result
 
@@ -589,6 +649,9 @@ SPECIAL_FORMS = {
     'let': eval_let,
     'or': eval_or,
     'dlambda': eval_dlambda_form,
+    'define-macro': eval_macro_definition,
     'quasiquote': eval_quasiquote,
     'unquote': eval_unquote,
+    'delay': eval_delay,
+    'cons-stream': eval_cons_stream
 }

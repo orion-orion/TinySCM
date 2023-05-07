@@ -214,9 +214,15 @@ def is_scheme_procedure(x):
     return isinstance(x, Procedure)
 
 
+@primitive("promise?")
+def is_scheme_promise(obj):
+    from internal_ds import Promise
+    return isinstance(obj, Promise)
+
+
 @primitive("scheme-valid-cdr?")
 def is_scheme_valid_cdr(x):
-    return is_scheme_pair(x) or is_scheme_null(x)
+    return is_scheme_pair(x) or is_scheme_null(x) or is_scheme_promise(x)
 
 
 @primitive("string?")
@@ -519,3 +525,160 @@ def scheme_set_cdr(x, y):
     validate_type(x, is_scheme_pair, 0, "set-cdr!")
     validate_type(y, is_scheme_valid_cdr, 1, "set-cdr!")
     x.rest = y
+
+
+##############################
+#      map/filter/reduce     #
+##############################
+
+# Although `map`/`filter`/`reduce` are not primitive procedures (they are
+# built-in high order proceduress), we define them here.
+
+
+@ primitive("map", use_env=True)
+def scheme_map(proc, items, env):
+    from eval_apply import complete_apply
+    validate_type(proc, is_scheme_procedure, 0, 'map')
+    validate_type(items, is_scheme_list, 1, 'map')
+
+    def scheme_map_iter(proc, items, env):
+        if is_scheme_null(items):
+            return nil
+        return scheme_cons(complete_apply(proc, scheme_list(items.first), env),
+                           scheme_map_iter(proc, items.rest, env))
+
+    return scheme_map_iter(proc, items, env)
+
+
+@ primitive("filter", use_env=True)
+def scheme_filter(predicate, items, env):
+    from eval_apply import complete_apply
+    validate_type(predicate, is_scheme_procedure, 0, 'filter')
+    validate_type(items, is_scheme_list, 1, 'filter')
+
+    def scheme_filter_iter(predicate, items, env):
+        if is_scheme_null(items):
+            return nil
+        elif complete_apply(predicate, scheme_list(items.first), env):
+            return scheme_cons(items.first, scheme_filter_iter(predicate,
+                                                               items.rest, env))
+        else:
+            return scheme_filter_iter(predicate, items.rest, env)
+
+    return scheme_filter_iter(predicate, items, env)
+
+
+@ primitive("reduce", use_env=True)
+def scheme_reduce(op, items, env):
+    from eval_apply import complete_apply
+    validate_type(op, is_scheme_procedure, 0, 'reduce')
+    validate_type(items, lambda x: x is not nil, 1, 'reduce')
+    validate_type(items, is_scheme_list, 1, 'reduce')
+
+    def scheme_reduce_iter(op, initial, items, env):
+        if is_scheme_null(items):
+            return initial
+        return complete_apply(op, scheme_list(items.first,
+                                              scheme_reduce_iter(op,
+                                                                 initial,
+                                                                 items.rest,
+                                                                 env)), env)
+
+    return scheme_reduce_iter(op, items.first, items.rest, env)
+
+
+##############################
+#    Promises and Streams    #
+##############################
+
+
+@ primitive("force")
+def scheme_force(obj):
+    """Note that `force` is a primitive procedure, not a special form
+    """
+    from internal_ds import Promise
+    from eval_apply import scheme_eval
+
+    def scheme_force_it(obj):
+        if isinstance(obj, Promise):
+            return scheme_force_it(scheme_eval(obj.expr, obj.env))
+        else:
+            return obj
+    return scheme_force_it(obj)
+
+
+@primitive("stream-car")
+def stream_car(stream):
+    validate_type(stream, lambda x: is_stream_pair(x), 0, 'stream-car')
+    return stream.first
+
+
+@primitive("stream-cdr")
+def stream_cdr(stream):
+    validate_type(stream, lambda x: is_stream_pair(x), 0, 'stream-cdr')
+    return scheme_force(stream.rest)
+
+
+@primitive("stream-null?")
+def is_stream_null(stream):
+    return is_scheme_null(stream)
+
+
+@primitive("stream-pair?")
+def is_stream_pair(obj):
+    return is_scheme_pair(obj) and is_scheme_promise(obj.rest)
+
+
+@primitive("stream-map", use_env=True)
+def stream_map(proc, stream, env):
+    from eval_apply import complete_apply
+    validate_type(proc, is_scheme_procedure, 0, 'map')
+    validate_type(stream, is_stream_pair, 1, 'map')
+
+    def stream_map_iter(proc, stream, env):
+        if is_stream_null(stream):
+            return nil
+        return scheme_cons(complete_apply(proc, scheme_list(stream_car(stream)
+                                                            ), env),
+                           stream_map_iter(proc, stream_cdr(stream), env))
+
+    return stream_map_iter(proc, stream, env)
+
+
+@primitive("stream-filter", use_env=True)
+def stream_filter(predicate, stream, env):
+    from eval_apply import complete_apply
+    validate_type(predicate, is_scheme_procedure, 0, 'filter')
+    validate_type(stream, is_stream_pair, 1, 'filter')
+
+    def scheme_filter_iter(predicate, stream, env):
+        if is_stream_null(stream):
+            return nil
+        elif complete_apply(predicate, scheme_list(stream_car(stream)), env):
+            return scheme_cons(stream_car(stream),
+                               scheme_filter_iter(predicate,
+                                                  stream_cdr(stream), env))
+        else:
+            return scheme_filter_iter(predicate, stream_cdr(stream), env)
+
+    return scheme_filter_iter(predicate, stream, env)
+
+
+@primitive("stream-reduce", use_env=True)
+def stream_reduce(op, stream, env):
+    from eval_apply import complete_apply
+    validate_type(op, is_scheme_procedure, 0, 'reduce')
+    validate_type(stream, lambda x: x is not nil, 1, 'reduce')
+    validate_type(stream, is_stream_pair, 1, 'reduce')
+
+    def scheme_reduce_iter(op, initial, stream, env):
+        if is_stream_null(stream):
+            return initial
+        return complete_apply(op, scheme_list(stream_car(stream),
+                                              scheme_reduce_iter(op,
+                                                                 initial,
+                                                                 stream_cdr(
+                                                                     stream),
+                                                                 env)), env)
+
+    return scheme_reduce_iter(op, stream_car(stream), stream_cdr(stream), env)
