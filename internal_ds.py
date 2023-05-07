@@ -275,7 +275,7 @@ class PrimitiveProcedure(Procedure):
         """
         if not self.pprocs.is_scheme_list(arguments):
             raise self.pprocs.SchemeError(
-                "arguments are not in a list: {0}".format(arguments))
+                "Arguments are not in a list: {0}".format(arguments))
 
         # Convert a Scheme list to a Python list
         arguments_list = self.flatten(arguments)
@@ -285,7 +285,7 @@ class PrimitiveProcedure(Procedure):
             return self.fn(*arguments_list)
         except TypeError:
             raise self.pprocs.SchemeError(
-                "incorrect number of arguments: {0}".format(self))
+                "Incorrect number of arguments: {0}".format(self))
 
     def flatten(self, arguments):
         if arguments is nil:

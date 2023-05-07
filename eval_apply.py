@@ -171,7 +171,7 @@ def eval_cond(expr, env, tail=True):
                 return sequence_to_expr(first.rest)
             else:
                 raise SchemeError(
-                    "ELSE clause isn't last: {0}".format(
+                    "ELSE clause is not last: {0}".format(
                         repl_str(clauses)))
         else:
             if cond_actions(first) is nil:  # for example, (cond ((= 1 1)))
@@ -378,7 +378,7 @@ def eval_definition(expr, env):
             return target.first
         else:
             bad_target = target.first if isinstance(target, Pair) else target
-            raise SchemeError("non-symbol: {0}".format(bad_target))
+            raise SchemeError("Non-symbol: {0}".format(bad_target))
 
     def definition_value(expr):
         target = expr.first
@@ -392,7 +392,7 @@ def eval_definition(expr, env):
             return make_lambda(target.rest, expr.rest)
         else:
             bad_target = target.first if isinstance(target, Pair) else target
-            raise SchemeError("non-symbol: {0}".format(bad_target))
+            raise SchemeError("Non-symbol: {0}".format(bad_target))
 
     # Check that expressions is a list of length at least 2
     validate_form(expr, min=2)
@@ -473,7 +473,7 @@ def eval_quasiquote(expr, env):
 
 
 def eval_unquote(expr, env):
-    raise SchemeError("unquote outside of quasiquote")
+    raise SchemeError("Unquote outside of quasiquote")
 
 ##############################
 #  Representing Expressions  #
@@ -513,7 +513,7 @@ def make_let_frame(bindings, env):
         return scheme_cons(var, vars), scheme_cons(val, vals)
 
     if not is_scheme_list(bindings):
-        raise SchemeError("bad bindings list in let form")
+        raise SchemeError("Bad bindings list in let form")
 
     vars, vals = bindings_items(bindings, env)
     validate_parameters(vars)
