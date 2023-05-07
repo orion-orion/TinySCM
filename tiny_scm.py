@@ -6,6 +6,7 @@ from primitive_procs import scheme_load, SchemeError, PRIMITIVE_PROCS
 from internal_ds import Environment, PrimitiveProcedure, repl_str
 from scm_tokenizer import Tokenizer
 from scm_parser import Parser
+from eval_apply import scheme_eval
 try:
     import readline  # history and arrow keys for CLI
 except ImportError:
@@ -69,8 +70,12 @@ def read_eval_print_loop(env, infile_lines=None, interactive=False,
                 # Parse a complete expression (single-line or multi-line) at a
                 # time
                 ast = parser.parse(lines_stream)
-                if not quiet and print_ast:
-                    print(repl_str(ast))
+                result = scheme_eval(ast, env)
+                if not quiet:
+                    if print_ast:
+                        print(repl_str(ast))
+                    elif result is not None:
+                        print(repl_str(result))
                 # If all the tokens read are consumed, then break
                 if parser.is_empty():
                     break
