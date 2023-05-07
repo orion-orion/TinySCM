@@ -533,8 +533,8 @@ def scheme_set_cdr(x, y):
 @ primitive("map", use_env=True)
 def scheme_map(proc, items, env):
     from eval_apply import complete_apply
-    validate_type(proc, is_scheme_procedure, 0, 'map')
-    validate_type(items, is_scheme_list, 1, 'map')
+    validate_type(proc, is_scheme_procedure, 0, "map")
+    validate_type(items, is_scheme_list, 1, "map")
 
     def scheme_map_iter(proc, items, env):
         if is_scheme_null(items):
@@ -548,8 +548,8 @@ def scheme_map(proc, items, env):
 @ primitive("filter", use_env=True)
 def scheme_filter(predicate, items, env):
     from eval_apply import complete_apply
-    validate_type(predicate, is_scheme_procedure, 0, 'filter')
-    validate_type(items, is_scheme_list, 1, 'filter')
+    validate_type(predicate, is_scheme_procedure, 0, "filter")
+    validate_type(items, is_scheme_list, 1, "filter")
 
     def scheme_filter_iter(predicate, items, env):
         if is_scheme_null(items):
@@ -566,9 +566,9 @@ def scheme_filter(predicate, items, env):
 @ primitive("reduce", use_env=True)
 def scheme_reduce(op, items, env):
     from eval_apply import complete_apply
-    validate_type(op, is_scheme_procedure, 0, 'reduce')
-    validate_type(items, lambda x: x is not nil, 1, 'reduce')
-    validate_type(items, is_scheme_list, 1, 'reduce')
+    validate_type(op, is_scheme_procedure, 0, "reduce")
+    validate_type(items, lambda x: x is not nil, 1, "reduce")
+    validate_type(items, is_scheme_list, 1, "reduce")
 
     def scheme_reduce_iter(op, initial, items, env):
         if is_scheme_null(items):
@@ -603,13 +603,13 @@ def scheme_force(obj):
 
 @primitive("stream-car")
 def stream_car(stream):
-    validate_type(stream, lambda x: is_stream_pair(x), 0, 'stream-car')
+    validate_type(stream, lambda x: is_stream_pair(x), 0, "stream-car")
     return stream.first
 
 
 @primitive("stream-cdr")
 def stream_cdr(stream):
-    validate_type(stream, lambda x: is_stream_pair(x), 0, 'stream-cdr')
+    validate_type(stream, lambda x: is_stream_pair(x), 0, "stream-cdr")
     return scheme_force(stream.rest)
 
 
@@ -626,8 +626,8 @@ def is_stream_pair(obj):
 @primitive("stream-map", use_env=True)
 def stream_map(proc, stream, env):
     from eval_apply import complete_apply
-    validate_type(proc, is_scheme_procedure, 0, 'map')
-    validate_type(stream, is_stream_pair, 1, 'map')
+    validate_type(proc, is_scheme_procedure, 0, "map")
+    validate_type(stream, is_stream_pair, 1, "map")
 
     def stream_map_iter(proc, stream, env):
         if is_stream_null(stream):
@@ -642,8 +642,8 @@ def stream_map(proc, stream, env):
 @primitive("stream-filter", use_env=True)
 def stream_filter(predicate, stream, env):
     from eval_apply import complete_apply
-    validate_type(predicate, is_scheme_procedure, 0, 'filter')
-    validate_type(stream, is_stream_pair, 1, 'filter')
+    validate_type(predicate, is_scheme_procedure, 0, "filter")
+    validate_type(stream, is_stream_pair, 1, "filter")
 
     def scheme_filter_iter(predicate, stream, env):
         if is_stream_null(stream):
@@ -661,9 +661,9 @@ def stream_filter(predicate, stream, env):
 @primitive("stream-reduce", use_env=True)
 def stream_reduce(op, stream, env):
     from eval_apply import complete_apply
-    validate_type(op, is_scheme_procedure, 0, 'reduce')
-    validate_type(stream, lambda x: x is not nil, 1, 'reduce')
-    validate_type(stream, is_stream_pair, 1, 'reduce')
+    validate_type(op, is_scheme_procedure, 0, "reduce")
+    validate_type(stream, lambda x: x is not nil, 1, "reduce")
+    validate_type(stream, is_stream_pair, 1, "reduce")
 
     def scheme_reduce_iter(op, initial, stream, env):
         if is_stream_null(stream):

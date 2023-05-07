@@ -20,7 +20,7 @@ if sys.version_info[0] < 3:  # Python 2 compatibility
         line = sys.stdin.readline()
         if not line:
             raise EOFError()
-        return line.rstrip('\r\n')
+        return line.rstrip("\r\n")
 
 ##############################
 #        Input / Output      #
@@ -56,7 +56,7 @@ def read_eval_print_loop(env, infile_lines=None, interactive=False,
     parser = Parser()
     while True:
         try:
-            # Open/Reopen a input stream instance with 'scm> ' as the input
+            # Open/Reopen a input stream instance with "scm> " as the input
             # prompt. The stream instance will be used until all the tokens
             # read are consumed
             lines_stream = read_input(infile_lines, input_prompt="scm> ")

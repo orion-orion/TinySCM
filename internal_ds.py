@@ -176,7 +176,7 @@ class Environment:
             # 空表
             if self.pprocs.is_scheme_null(frames):
                 raise self.pprocs.SchemeError(
-                    'Unbound variable: {0}'.format(var))
+                    "Unbound variable: {0}".format(var))
             frame = frames.first
             if var in frame.bindings.keys():
                 frame.set_var(var, val)

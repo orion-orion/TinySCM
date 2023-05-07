@@ -36,7 +36,7 @@ def scheme_eval(expr, env, _=None):
     # All valid non-atomic expressions are lists (combinations)
     if not isinstance(expr, Pair):
         raise SchemeError(
-            'Unknown expression type: {0}'.format(repl_str(expr)))
+            "Unknown expression type: {0}".format(repl_str(expr)))
     first, rest = expr.first, expr.rest
     # Evaluate special forms
     if is_scheme_symbol(first) and first in SPECIAL_FORMS:
@@ -65,7 +65,7 @@ def scheme_apply(procedure, arguments, env):
         return eval_sequence(procedure.body, new_env, tail=True)
     else:
         raise SchemeError(
-            'Unknown procedure type: {0}'.format(repl_str(procedure)))
+            "Unknown procedure type: {0}".format(repl_str(procedure)))
 
 ##############################
 #        Special Forms       #
@@ -453,13 +453,13 @@ def eval_quasiquote(expr, env):
 
         # When encountering `unquote`, we decrease the depth by 1.
         # If the depth is 0, we evaluate the rest expressions.
-        if val.first == 'unquote':
+        if val.first == "unquote":
             depth -= 1
             if depth == 0:
                 expr = val.rest
                 validate_form(expr, 1, 1)
                 return scheme_eval(expr.first, env)
-        elif val.first == 'quasiquote':
+        elif val.first == "quasiquote":
             # Leave the item unevaluated
             depth += 1
 
@@ -473,7 +473,7 @@ def eval_quasiquote(expr, env):
 
 
 def eval_unquote(expr, env):
-    raise SchemeError('unquote outside of quasiquote')
+    raise SchemeError("unquote outside of quasiquote")
 
 ##############################
 #  Representing Expressions  #
@@ -513,7 +513,7 @@ def make_let_frame(bindings, env):
         return scheme_cons(var, vars), scheme_cons(val, vals)
 
     if not is_scheme_list(bindings):
-        raise SchemeError('bad bindings list in let form')
+        raise SchemeError("bad bindings list in let form")
 
     vars, vals = bindings_items(bindings, env)
     validate_parameters(vars)
