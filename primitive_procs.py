@@ -46,10 +46,10 @@ def validate_type(val, predicate, k, name):
         raise SchemeError(msg.format(k, name, type_name))
     return val
 
-
 ##############################
 #       Core Interpreter     #
 ##############################
+
 
 @primitive("display")
 def scheme_display(*vals):
@@ -234,7 +234,6 @@ def is_scheme_string(x):
 def is_scheme_symbol(x):
     return isinstance(x, str) and not is_scheme_string(x)
 
-
 ##############################
 # Pair and List Manipulation #
 ##############################
@@ -404,7 +403,6 @@ def number_fn(module, name, fallback=None):
         return py_fn(*vals)
     return scheme_fn
 
-
 # Additional Math Primitives
 
 
@@ -417,12 +415,12 @@ for _name in ["acos", "acosh", "asin", "asinh", "atan", "atan2", "atanh",
 # Python 2 compatibility
 primitive("log2")(number_fn(math, "log2", lambda x: math.log(x, 2)))
 
-
 ##############################
 #      Boolean Operations    #
 ##############################
 
 # General
+
 
 @primitive("eq?")
 def is_scheme_eq(x, y):
@@ -456,7 +454,6 @@ def is_scheme_eqv(x, y):
 @primitive("not")
 def scheme_not(x):
     return not is_scheme_true(x)
-
 
 # On Numbers
 
@@ -508,7 +505,6 @@ def is_scheme_zero(x):
     _check_nums(x)
     return x == 0
 
-
 ##############################
 #       Mutation Extras      #
 ##############################
@@ -525,7 +521,6 @@ def scheme_set_cdr(x, y):
     validate_type(x, is_scheme_pair, 0, "set-cdr!")
     validate_type(y, is_scheme_valid_cdr, 1, "set-cdr!")
     x.rest = y
-
 
 ##############################
 #      map/filter/reduce     #
@@ -585,7 +580,6 @@ def scheme_reduce(op, items, env):
                                                                  env)), env)
 
     return scheme_reduce_iter(op, items.first, items.rest, env)
-
 
 ##############################
 #    Promises and Streams    #

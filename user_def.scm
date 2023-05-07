@@ -3,9 +3,7 @@
 (define (cdar x) (cdr (car x)))
 (define (cddr x) (cdr (cdr x)))
 
-
 ; Some utility functions that you may find useful to implement
-
 
 (define (zip pairs)
   (list (map car pairs) (map cadr pairs))

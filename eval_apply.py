@@ -11,7 +11,6 @@ from primitive_procs import SchemeError, primitive, is_scheme_true, \
     scheme_cons,  scheme_list
 from utils import validate_form, validate_parameters, validate_procedure
 
-
 ##############################
 #          Eval/Apply        #
 ##############################
@@ -67,7 +66,6 @@ def scheme_apply(procedure, arguments, env):
     else:
         raise SchemeError(
             'Unknown procedure type: {0}'.format(repl_str(procedure)))
-
 
 ##############################
 #        Special Forms       #
@@ -258,7 +256,6 @@ def eval_or(exprs, env, tail=True):
     else:
         return eval_or(exprs.rest, env)
 
-
 # Sequencing
 
 
@@ -322,7 +319,6 @@ def eval_let(exprs, env, tail=True):
     validate_form(exprs, min=2)
     let_env = make_let_frame(exprs.first, env)
     return eval_sequence(exprs.rest, let_env, tail=tail)
-
 
 # Assignments
 
@@ -426,7 +422,6 @@ def eval_lambda(expr, env):
     body = expr.rest
     return LambdaProcedure(parameters, body, env)
 
-
 # Quoting
 
 
@@ -480,7 +475,6 @@ def eval_quasiquote(expr, env):
 def eval_unquote(expr, env):
     raise SchemeError('unquote outside of quasiquote')
 
-
 ##############################
 #  Representing Expressions  #
 ##############################
@@ -525,7 +519,6 @@ def make_let_frame(bindings, env):
     validate_parameters(vars)
     return env.extend_environment(vars, vals)
 
-
 ##############################
 #       Dynamic scoping      #
 ##############################
@@ -569,10 +562,10 @@ def eval_macro_definition(expr, env):
     else:
         raise SchemeError("Invalid use of macro")
 
-
 ##############################
 #           Stream           #
 ##############################
+
 
 def eval_delay(expr, env):
     """Evaluates a delay form."""
@@ -584,7 +577,6 @@ def eval_cons_stream(expr, env):
     """Evaluates a cons-stream form."""
     validate_form(expr, 2, 2)
     return Pair(scheme_eval(expr.first, env), Promise(expr.rest.first, env))
-
 
 ##############################
 #   Tail Call Optimization   #
@@ -630,7 +622,6 @@ def optimize_tail_calls(original_scheme_eval):
 
 # Uncomment the following line to apply tail call optimization
 scheme_eval = optimize_tail_calls(scheme_eval)
-
 
 ##############################
 # Dispatch for special forms #

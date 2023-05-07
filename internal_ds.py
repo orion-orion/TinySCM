@@ -124,7 +124,6 @@ class nil:
 # whether the object is nil later, we always use the `is null` syntax
 nil = nil()
 
-
 ##############################
 #         Environment        #
 ##############################
@@ -243,7 +242,6 @@ class Environment:
                 "Too few arguemtns supplied")
         return new_env
 
-
 ##############################
 #         Procedures         #
 ##############################
@@ -339,7 +337,6 @@ def is_primitive_procedure(procedure):
 def is_compound_procedure(procedure):
     return isinstance(procedure, Procedure)
 
-
 ##############################
 #        Dynamic Scope       #
 ##############################
@@ -379,7 +376,6 @@ class MacroProcedure(LambdaProcedure):
     create an expression that is evaluated in place of a call.
     """
 
-
 ##############################
 #           Promise          #
 ##############################
@@ -403,7 +399,6 @@ class Promise:
             return self.expr.rest.first.first
         else:
             return repr(self.expr)
-
 
 ##############################
 #        Tail Recursion      #

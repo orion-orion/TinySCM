@@ -6,16 +6,14 @@
 ;;;
 ;;; after the last test you wish to run.
 
-;;; ********************************
+;;; *******************************************
 ;;; *** Add your own tests here! (Optional) ***
-;;; ********************************
+;;; *******************************************
 
 ;;; These are examples from several sections of "The Structure
 ;;; and Interpretation of Computer Programs" by Abelson and Sussman.
 
 ;;; License: Creative Commons share alike with attribution
-
-;;; 1.1.1
 
 10
 ; expect 10
@@ -53,10 +51,6 @@
    (+ (- 10 7)
       6))
 ; expect 57
-
-
-
-;;; 1.1.2
 
 (define size 2)
 ; expect size
@@ -102,8 +96,6 @@ circumference
 (f 5)
 ; expect 136
 
-;;; 1.1.6
-
 (define (abs x)
   (cond ((> x 0) x)
         ((= x 0) 0)
@@ -121,8 +113,6 @@ circumference
   ((if (> b 0) + -) a b))
 (a-plus-abs-b 3 -2)
 ; expect 5
-
-;;; 1.1.7
 
 (define (sqrt-iter guess x)
   (if (good-enough? guess x)
@@ -149,8 +139,6 @@ circumference
 (square (sqrt 1000))
 ; expect 1000.000369924366
 
-;;; 1.1.8
-
 (define (sqrt x)
   (define (good-enough? guess)
     (< (abs (- (square guess) x)) 0.001))
@@ -173,8 +161,6 @@ circumference
 (square (sqrt 1000))
 ; expect 1000.000369924366
 
-;;; 1.3.1
-
 (define (cube x) (* x x x))
 (define (sum term a next b)
   (if (> a b)
@@ -192,8 +178,6 @@ circumference
   (sum identity a inc b))
 (sum-integers 1 10)
 ; expect 55
-
-;;; 1.3.2
 
 ((lambda (x y z) (+ x y (square z))) 1 2 3)
 ; expect 12
@@ -217,8 +201,6 @@ circumference
       (y (+ x 2)))
   (* x y))
 ; expect 21
-
-;;; 2.1.1
 
 (define (add-rat x y)
   (make-rat (+ (* (numer x) (denom y))
@@ -338,8 +320,6 @@ one-through-four
 (count-leaves (list x x))
 ; expect 8
 
-;;; 2.2.3
-
 (define (odd? x) (= 1 (remainder x 2)))
 (define (filter predicate sequence)
   (cond ((null? sequence) nil)
@@ -378,8 +358,6 @@ one-through-four
                       (enumerate-tree (cdr tree))))))
 (enumerate-tree (list 1 (list 2 (list 3 4)) 5))
 ; expect (1 2 3 4 5)
-
-;;; 2.3.1
 
 (define a 1)
 
@@ -543,6 +521,7 @@ one-through-four
 ;;; Scheme Implementations ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 ;; len outputs the length of list s
 (define (len s)
   (if (eqv? s '())
@@ -551,10 +530,10 @@ one-through-four
 (len '(1 2 3 4))
 ; expect 4
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; Tests from Doctests ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (begin 1)
 ; expect 1
@@ -605,13 +584,12 @@ x
 (let ((x 2) (y 3)) (+ x y))
 ; expect 5
 
-;;;;;;;;;;;;;;;;;;;;
-;;; Optional ;;;
-;;;;;;;;;;;;;;;;;;;;
-
 (exit)
 
-; Tail call optimization tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Tail call optimization ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (define (sum n total)
   (if (zero? n) total
@@ -638,7 +616,10 @@ x
 
 (exit)
 
-; macro tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;          Macro         ;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (define (map f lst)
 (if (null? lst)
@@ -672,11 +653,10 @@ x
 (hyp 3 4)
 ; expect 5.000023178253949
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;   Tests from Doctests  ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Tests from Doctests ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-macro (f x) (car x))
 ; expect f
