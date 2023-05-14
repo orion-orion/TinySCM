@@ -121,7 +121,7 @@ class nil:
 
 
 # Assignment hides the nil class; there is only one instance, so when we check
-# whether the object is nil later, we always use the `is null` syntax
+# whether the object is nil later, we always use the `is nil` syntax
 nil = nil()
 
 ##############################
