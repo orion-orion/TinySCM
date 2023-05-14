@@ -155,7 +155,7 @@ def is_scheme_true(val):
 
 
 def is_scheme_false(val):
-    """Only False is false in scheme_reader."""
+    """Only False is false in Scheme."""
     return val is False
 
 

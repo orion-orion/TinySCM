@@ -26,7 +26,7 @@ def scheme_eval(expr, env, _=None):
     >>> scheme_eval(parser.parse(iter([tokenizer.tokenize("(+ 1 2)")])), env)
     3
     """
-    # Evaluate literals
+    # Evaluate self-evaluating expressions
     if is_self_evaluating(expr):
         return expr
     # Evaluate variables
@@ -34,10 +34,10 @@ def scheme_eval(expr, env, _=None):
         return env.lookup_variable_value(expr)
 
     # All valid non-atomic expressions are lists (combinations)
-    if not isinstance(expr, Pair):
+    if not is_scheme_pair(expr):
         raise SchemeError(
             "Unknown expression type: {0}".format(repl_str(expr)))
-    first, rest = expr.first, expr.rest
+    first, rest = first_expr(expr), rest_exprs(expr)
     # Evaluate special forms
     if is_scheme_symbol(first) and first in SPECIAL_FORMS:
         return SPECIAL_FORMS[first](rest, env)
@@ -100,8 +100,8 @@ def eval_if(expr, env, tail=True):
     """
     validate_form(expr, min=2, max=3)
 
-    if_predicate = expr.first
-    if_predicate_val = scheme_eval(if_predicate, env)
+    if_pred = if_predicate(expr)
+    if_predicate_val = scheme_eval(if_pred, env)
     # All values in Scheme are true except `false` object,
     # that is why we need `is_scheme_true()`
     if is_scheme_true(if_predicate_val):
@@ -113,15 +113,14 @@ def eval_if(expr, env, tail=True):
         # Error: too few operands in form
         # scm> (if(= 1 1) nil)
         # ()
-        if_consequent = expr.rest.first
-        if if_consequent is None:
+        if_conseq = if_consequent(expr)
+        if if_conseq is None:
             return if_predicate_val
         else:
-            return scheme_eval(if_consequent, env, tail=tail)
+            return scheme_eval(if_conseq, env, tail=tail)
     # Turn to alternative
     elif len(expr) == 3:
-        if_alternative = expr.rest.rest.first
-        return scheme_eval(if_alternative, env, tail=tail)
+        return scheme_eval(if_alternative(expr), env, tail=tail)
     # If there is no alternative, return False
     else:
         return False
@@ -139,51 +138,6 @@ def eval_cond(expr, env, tail=True):
 
     Note that `eval_cond` can use tail call optimization.
     """
-    def sequence_to_expr(seq):
-        def make_begin(seq):
-            return scheme_cons("begin", seq)
-
-        if seq is nil:
-            return seq
-        elif seq.rest is nil:
-            return seq.first
-        else:
-            return make_begin(seq)
-
-    def cond_predicate(clause):
-        return clause.first
-
-    def cond_actions(clause):
-        return clause.rest
-
-    def make_if(predicate, consequent, alternative):
-        return scheme_list("if", predicate, consequent, alternative)
-
-    def cond_to_if(clauses):
-        # return None means that interpreter does not print anything
-        if clauses is nil:
-            return None
-        first = clauses.first
-        rest = clauses.rest
-        validate_form(first, min=1)
-        if cond_predicate(first) == "else":
-            if rest is nil:
-                return sequence_to_expr(first.rest)
-            else:
-                raise SchemeError(
-                    "ELSE clause is not last: {0}".format(
-                        repl_str(clauses)))
-        else:
-            if cond_actions(first) is nil:  # for example, (cond ((= 1 1)))
-                # there is no consequent, we denote it as None
-                # o distinguish it from nil
-                if_consequent = None
-            else:  # for example, (cond ((= 1 1) 2)) or (cond ((= 1 1) nil))
-                # there is a consequent, including nil
-                if_consequent = sequence_to_expr(first.rest)
-            return make_if(cond_predicate(first), if_consequent, cond_to_if(
-                rest))
-
     return scheme_eval(cond_to_if(expr), env, tail)
 
 
@@ -210,17 +164,17 @@ def eval_and(exprs, env, tail=True):
     # If the last expression is reached (indicating that the values of the
     # previous expressions are all true), then the evaluation result is
     # returned directly
-    elif exprs.rest is nil:
-        return scheme_eval(exprs.first, env, tail=tail)
+    elif rest_exprs(exprs) is nil:
+        return scheme_eval(first_expr(exprs), env, tail=tail)
 
-    value = scheme_eval(exprs.first, env)
+    value = scheme_eval(first_expr(exprs), env)
     # If an expression evaluates to False, return False,
     # and the remaining expressions are not evaluated
     if is_scheme_false(value):
         return False
     else:
         # If an expression evaluates to True, go on,
-        return eval_and(exprs.rest, env)
+        return eval_and(rest_exprs(exprs), env)
 
 
 def eval_or(exprs, env, tail=True):
@@ -245,16 +199,16 @@ def eval_or(exprs, env, tail=True):
     # If the last expression is reached (indicating that the values of the
     # previous expressions are all False), then the evaluation result is
     # returned directly
-    elif exprs.rest is nil:
-        return scheme_eval(exprs.first, env, tail=tail)
+    elif rest_exprs(exprs) is nil:
+        return scheme_eval(first_expr(exprs), env, tail=tail)
 
-    value = scheme_eval(exprs.first, env)
+    value = scheme_eval(first_expr(exprs), env)
     # If an expression evaluates to True, return value, and the remaining
     # expressions are not evaluated
     if is_scheme_true(value):
         return value
     else:
-        return eval_or(exprs.rest, env)
+        return eval_or(rest_exprs(exprs), env)
 
 # Sequencing
 
@@ -280,17 +234,17 @@ def eval_sequence(exprs, env, tail=False):
         `eval_sequence` can use tail call optimization.
     """
 
-    if not isinstance(exprs, Pair):
+    if not is_scheme_pair(exprs):
         return
     # If `exprs` is the last expression
-    if exprs.rest is nil:
+    if rest_exprs(exprs) is nil:
         # The value of the last expression is returned as the value of the
         # entire `begin` special form(or the body of a procedure)
-        return scheme_eval(exprs.first, env, tail)
+        return scheme_eval(first_expr(exprs), env, tail)
     else:
         # Evaluate the expressions <expr 1>, <expr 2>, ..., <expr k> in order
-        scheme_eval(exprs.first, env)
-        return eval_sequence(exprs.rest, env, tail)
+        scheme_eval(first_expr(exprs), env)
+        return eval_sequence(rest_exprs(exprs), env, tail)
 
 
 def eval_begin(exprs, env, tail=True):
@@ -317,8 +271,8 @@ def eval_let(exprs, env, tail=True):
     use tail call optimization.
     """
     validate_form(exprs, min=2)
-    let_env = make_let_frame(exprs.first, env)
-    return eval_sequence(exprs.rest, let_env, tail=tail)
+    let_env = make_let_env(first_expr(exprs), env)
+    return eval_sequence(rest_exprs(exprs), let_env, tail=tail)
 
 # Assignments
 
@@ -334,12 +288,6 @@ def eval_assignment(expr, env):
     >>> env.frames.first.bindings
     {'x': 3}
     """
-    def assignment_variable(expr):
-        return expr.first
-
-    def assignment_value(expr):
-        return expr.rest.first
-
     env.set_variable_value(assignment_variable(
         expr), scheme_eval(assignment_value(expr), env))
 
@@ -366,34 +314,6 @@ def eval_definition(expr, env):
     >>> scheme_eval(parser.parse(iter([tokenizer.tokenize("(f 3)")])), env)
     5
     """
-    def definition_varaible(expr):
-        target = expr.first
-        # For the case of (define <var> <value>)
-        if is_scheme_symbol(target):
-            #  `(define x)` or `(define x 2 y 4)` is invalid
-            validate_form(expr, min=2, max=2)
-            return target
-        # For the case of (define (<var> <param 1>, ..., <param n>) <body>)
-        elif isinstance(target, Pair) and is_scheme_symbol(target.first):
-            return target.first
-        else:
-            bad_target = target.first if isinstance(target, Pair) else target
-            raise SchemeError("Non-symbol: {0}".format(bad_target))
-
-    def definition_value(expr):
-        target = expr.first
-        # For the case of (define <var> <value>)
-        if is_scheme_symbol(target):
-            return expr.rest.first
-        # For the case of (define (<var> <param 1>, ..., <param n>) <body>)
-        elif isinstance(target, Pair) and is_scheme_symbol(target.first):
-            # Note: The validation of the lambda special form is turned over
-            # to `scheme_eval()`
-            return make_lambda(target.rest, expr.rest)
-        else:
-            bad_target = target.first if isinstance(target, Pair) else target
-            raise SchemeError("Non-symbol: {0}".format(bad_target))
-
     # Check that expressions is a list of length at least 2
     validate_form(expr, min=2)
 
@@ -417,9 +337,9 @@ def eval_lambda(expr, env):
     nil), {Global Frame})
     """
     validate_form(expr, min=2)
-    parameters = expr.first
+    parameters = lambda_parameters(expr)
     validate_parameters(parameters)
-    body = expr.rest
+    body = lambda_body(expr)
     return LambdaProcedure(parameters, body, env)
 
 # Quoting
@@ -435,7 +355,7 @@ def eval_quote(expr, env):
     Note that the current environment `env` is not used.
     """
     validate_form(expr, min=1, max=1)
-    return expr.first
+    return text_of_quotation(expr)
 
 
 def eval_quasiquote(expr, env):
@@ -453,12 +373,12 @@ def eval_quasiquote(expr, env):
 
         # When encountering `unquote`, we decrease the depth by 1.
         # If the depth is 0, we evaluate the rest expressions.
-        if val.first == "unquote":
+        if is_unquote(val):
             depth -= 1
             if depth == 0:
-                expr = val.rest
+                expr = rest_exprs(val)
                 validate_form(expr, 1, 1)
-                return scheme_eval(expr.first, env)
+                return scheme_eval(first_expr(expr), env)
         elif val.first == "quasiquote":
             # Leave the item unevaluated
             depth += 1
@@ -469,7 +389,7 @@ def eval_quasiquote(expr, env):
     validate_form(expr, min=1, max=1)
     # Note that when call `quasiquote_item`, we have encountered
     # the first quasiquote, so depth=1
-    return quasiquote_item(expr.first, env, depth=1)
+    return quasiquote_item(text_of_quotation(expr), env, depth=1)
 
 
 def eval_unquote(expr, env):
@@ -479,6 +399,8 @@ def eval_unquote(expr, env):
 #  Representing Expressions  #
 ##############################
 
+# Self-evaluating expressions
+
 
 def is_self_evaluating(expr):
     """Returns whether `expr` evaluates to itself, i.e. whether `expr` is a
@@ -487,16 +409,136 @@ def is_self_evaluating(expr):
     return is_scheme_boolean(expr) or is_scheme_number(expr) or \
         is_scheme_null(expr) or is_scheme_string(expr) or expr is None
 
+# Variables
+
 
 def is_scheme_variable(x):
     return is_scheme_symbol(x)
+
+# Quotations
+
+
+def text_of_quotation(expr):
+    return expr.first
+
+
+def is_unquote(expr):
+    return is_tagged_list(expr, "unquote")
+
+
+def is_tagged_list(expr, tag):
+    """Returns whether a list `expr` begins with a given symbol `tag`.
+    """
+    if is_scheme_pair(expr):
+        return expr.first == tag
+    else:
+        return False
+
+# Assignments
+
+
+def assignment_variable(expr):
+    return expr.first
+
+
+def assignment_value(expr):
+    return expr.rest.first
+
+# Definitions
+
+
+def definition_varaible(expr):
+    """Returns the variable part of a definition form.
+    """
+    target = expr.first
+    # For the case of (define <var> <value>)
+    if is_scheme_symbol(target):
+        #  `(define x)` or `(define x 2 y 4)` is invalid
+        validate_form(expr, min=2, max=2)
+        return target
+    # For the case of (define (<var> <param 1>, ..., <param n>) <body>)
+    elif is_scheme_pair(target) and is_scheme_symbol(target.first):
+        return target.first
+    else:
+        bad_target = target.first if is_scheme_pair(target) else target
+        raise SchemeError("Non-symbol: {0}".format(bad_target))
+
+
+def definition_value(expr):
+    """Returns the value part of a definition form.
+    """
+    target = expr.first
+    # For the case of (define <var> <value>)
+    if is_scheme_symbol(target):
+        return expr.rest.first
+    # For the case of (define (<var> <param 1>, ..., <param n>) <body>)
+    elif is_scheme_pair(target) and is_scheme_symbol(target.first):
+        # Note: The validation of the lambda special form is turned over
+        # to `scheme_eval()`
+        return make_lambda(target.rest, expr.rest)
+    else:
+        bad_target = target.first if is_scheme_pair(target) else target
+        raise SchemeError("Non-symbol: {0}".format(bad_target))
+
+# Lambda expressions
+
+
+def lambda_parameters(expr):
+    return expr.first
+
+
+def lambda_body(expr):
+    return expr.rest
 
 
 def make_lambda(parameters, body):
     return scheme_cons("lambda", scheme_cons(parameters, body))
 
+# Conditionals
 
-def make_let_frame(bindings, env):
+
+def if_predicate(expr):
+    return expr.first
+
+
+def if_consequent(expr):
+    return expr.rest.first
+
+
+def if_alternative(expr):
+    return expr.rest.rest.first
+
+
+def make_if(predicate, consequent, alternative):
+    return scheme_list("if", predicate, consequent, alternative)
+
+# Begin expressions
+
+
+def first_expr(seq):
+    return seq.first
+
+
+def rest_exprs(seq):
+    return seq.rest
+
+
+def sequence_to_expr(seq):
+    if seq is nil:
+        return seq
+    elif rest_exprs(seq) is nil:
+        return first_expr(seq)
+    else:
+        return make_begin(seq)
+
+
+def make_begin(seq):
+    return scheme_cons("begin", seq)
+
+# Let expressions
+
+
+def make_let_env(bindings, env):
     """Create a new environment with a new frame that contains the definitions
     given in `bindings`. The Scheme list `bindings` must have the form of a
     proper bindings list in a let expression: each item must be a list
@@ -518,6 +560,50 @@ def make_let_frame(bindings, env):
     vars, vals = bindings_items(bindings, env)
     validate_parameters(vars)
     return env.extend_environment(vars, vals)
+
+# Derived expressions
+# Cond expressions
+
+
+def cond_predicate(clause):
+    return clause.first
+
+
+def cond_actions(clause):
+    return clause.rest
+
+
+def cond_to_if(exprs):
+    """Transforms cond expressions into if expressions.
+    """
+    return expand_clauses(exprs)
+
+
+def expand_clauses(clauses):
+    # return None means that interpreter does not print anything
+    if clauses is nil:
+        return None
+    first = clauses.first
+    rest = clauses.rest
+    validate_form(first, min=1)
+    if cond_predicate(first) == "else":
+        if rest is nil:
+            return sequence_to_expr(first.rest)
+        else:
+            raise SchemeError(
+                "ELSE clause is not last: {0}".format(
+                    repl_str(clauses)))
+    else:
+        if cond_actions(first) is nil:  # for example, (cond ((= 1 1)))
+            # there is no consequent, we denote it as None
+            # o distinguish it from nil
+            if_consequent = None
+        else:  # for example, (cond ((= 1 1) 2)) or (cond ((= 1 1) nil))
+            # there is a consequent, including nil
+            if_consequent = sequence_to_expr(first.rest)
+        return make_if(cond_predicate(first), if_consequent, cond_to_if(
+            rest))
+
 
 ##############################
 #       Dynamic scoping      #
@@ -547,11 +633,11 @@ def eval_macro_definition(expr, env):
     1
 
     About macro, you can refer to:
-    https://liujiacai.net/blog/2017/08/31/master-macro-theory/  
+    https://liujiacai.net/blog/2017/08/31/master-macro-theory/
     """
     validate_form(expr, min=2)
     target = expr.first
-    if isinstance(target, Pair) and is_scheme_symbol(target.first):
+    if is_scheme_pair(target) and is_scheme_symbol(target.first):
         func_name = target.first
         # `target.rest` is parameters，not `target.rest.first`
         parameters = target.rest
@@ -576,7 +662,7 @@ def eval_delay(expr, env):
 def eval_cons_stream(expr, env):
     """Evaluates a cons-stream form."""
     validate_form(expr, 2, 2)
-    return Pair(scheme_eval(expr.first, env), Promise(expr.rest.first, env))
+    return scheme_cons(scheme_eval(expr.first, env), Promise(expr.rest.first, env))
 
 ##############################
 #   Tail Call Optimization   #
