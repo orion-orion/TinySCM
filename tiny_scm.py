@@ -24,24 +24,32 @@ if sys.version_info[0] < 3:  # Python 2 compatibility
         return line.rstrip("\r\n")
 
 ##############################
-#        Input / Output      #
+#     Global environment     #
 ##############################
 
 
-def read_input(infile_lines, input_prompt):
-    """Reads the input lines."""
-    if infile_lines:  # If use a file stream as input
-        while infile_lines:
-            line = infile_lines.pop(0).strip("\n")
-            yield line
-        raise EOFError
-    else:  # if use a keyboard stream as input
-        while True:
-            yield input(input_prompt)
-            # If a multi-line expression input is not
-            # terminated, use whitespace as the
-            # the input prompt to read more lines.
-            input_prompt = " " * len(input_prompt)
+def setup_environment():
+    """Initializes and returns a single-frame environment including symbols
+    associated with the primitive procedures.
+    """
+    initial_env = Environment()
+    initial_env.define_variable("undefined", None)
+    add_primitives(initial_env, PRIMITIVE_PROCS)
+    return initial_env
+
+
+def add_primitives(env, funcs_and_names):
+    """Enters bindings in `funcs_and_names` into `env`, an environment,
+    as primitive procedures. Each item in `funcs_and_names` has the form
+    (<python function>, <function name>, <whether to use the environment>).
+    """
+    for fn, name, use_env in funcs_and_names:
+        env.define_variable(name, PrimitiveProcedure(
+            fn, name=name, use_env=use_env))
+
+##############################
+#        Input / Output      #
+##############################
 
 
 def read_eval_print_loop(env, infile_lines=None, interactive=False,
@@ -105,24 +113,20 @@ def read_eval_print_loop(env, infile_lines=None, interactive=False,
             return
 
 
-def add_primitives(env, funcs_and_names):
-    """Enters bindings in `funcs_and_names` into `env`, an environment,
-    as primitive procedures. Each item in `funcs_and_names` has the form
-    (<python function>, <function name>, <whether to use the environment>).
-    """
-    for fn, name, use_env in funcs_and_names:
-        env.define_variable(name, PrimitiveProcedure(
-            fn, name=name, use_env=use_env))
-
-
-def setup_environment():
-    """Initializes and returns a single-frame environment including symbols
-    associated with the primitive procedures.
-    """
-    initial_env = Environment()
-    initial_env.define_variable("undefined", None)
-    add_primitives(initial_env, PRIMITIVE_PROCS)
-    return initial_env
+def read_input(infile_lines, input_prompt):
+    """Reads the input lines."""
+    if infile_lines:  # If use a file stream as input
+        while infile_lines:
+            line = infile_lines.pop(0).strip("\n")
+            yield line
+        raise EOFError
+    else:  # if use a keyboard stream as input
+        while True:
+            yield input(input_prompt)
+            # If a multi-line expression input is not
+            # terminated, use whitespace as the
+            # the input prompt to read more lines.
+            input_prompt = " " * len(input_prompt)
 
 
 def parse_args():
