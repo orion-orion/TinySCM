@@ -52,19 +52,6 @@ class Pair:
         self.first = first
         self.rest = rest
 
-    def __repr__(self):
-        return "Pair({0}, {1})".format(repr(self.first), repr(self.rest))
-
-    def __str__(self):
-        s = "(" + repl_str(self.first)
-        rest = self.rest
-        while isinstance(rest, Pair):
-            s += " " + repl_str(rest.first)
-            rest = rest.rest
-        if rest is not nil:
-            s += " . " + repl_str(rest)
-        return s + ")"
-
     def __len__(self):
         n, rest = 1, self.rest
         while isinstance(rest, Pair):
@@ -100,15 +87,22 @@ class Pair:
         else:
             raise TypeError("ill-formed list (cdr is a promise)")
 
+    def __str__(self):
+        s = "(" + repl_str(self.first)
+        rest = self.rest
+        while isinstance(rest, Pair):
+            s += " " + repl_str(rest.first)
+            rest = rest.rest
+        if rest is not nil:
+            s += " . " + repl_str(rest)
+        return s + ")"
+
+    def __repr__(self):
+        return "Pair({0}, {1})".format(repr(self.first), repr(self.rest))
+
 
 class nil:
     """The empty list"""
-
-    def __repr__(self):
-        return "nil"
-
-    def __str__(self):
-        return "()"
 
     def __len__(self):
         return 0
@@ -118,6 +112,12 @@ class nil:
 
     def flatmap(self, fn):
         return self
+
+    def __str__(self):
+        return "()"
+
+    def __repr__(self):
+        return "nil"
 
 
 # Assignment hides the nil class; there is only one instance, so when we check
@@ -155,37 +155,6 @@ class Environment:
         """An environment is initialized as a list containing a empty frame."""
         self.frames = self.pprocs.scheme_list(Frame())
 
-    def __repr__(self):
-        def env_loop_repr(frames):
-            # If there is no enclosing environment
-            if self.pprocs.is_scheme_null(frames.rest):
-                return "{Global Frame}"
-            else:
-                frame = frames.first
-                return repr(frame) + " -> " + env_loop_repr(frames.rest)
-        return env_loop_repr(self.frames)
-
-    def define_variable(self, var, val):
-        """Defines Scheme variable to have value."""
-        frame = self.frames.first
-        frame.add_binding(var, val)
-
-    def set_variable_value(self, var, val):
-        """Set Scheme variable to have value."""
-        def env_loop(frames):
-            # 空表
-            if self.pprocs.is_scheme_null(frames):
-                raise self.pprocs.SchemeError(
-                    "Unbound variable: {0}".format(var))
-            frame = frames.first
-            if var in frame.bindings.keys():
-                frame.set_var(var, val)
-                return
-            else:
-                env_loop(frames.rest)
-
-        env_loop(self.frames)
-
     def lookup_variable_value(self, var):
         """Returns the value bound to variable. Errors if variable is not
         found.
@@ -201,20 +170,6 @@ class Environment:
             else:
                 return env_loop(frames.rest)
         return env_loop(self.frames)
-
-    @ staticmethod
-    def make_frame(vars, vals):
-        """Returns a new frame containing the bindings of the variables and
-        values.
-        """
-        frame = Frame()
-        while isinstance(vars, Pair):
-            var = vars.first
-            val = vals.first
-            frame.add_binding(var, val)
-            vars = vars.rest
-            vals = vals.rest
-        return frame
 
     def extend_environment(self, vars, vals):
         """Returns a new environment containing a new frame, in which the
@@ -242,6 +197,51 @@ class Environment:
                 "Too few arguemtns supplied")
         return new_env
 
+    @ staticmethod
+    def make_frame(vars, vals):
+        """Returns a new frame containing the bindings of the variables and
+        values.
+        """
+        frame = Frame()
+        while isinstance(vars, Pair):
+            var = vars.first
+            val = vals.first
+            frame.add_binding(var, val)
+            vars = vars.rest
+            vals = vals.rest
+        return frame
+
+    def define_variable(self, var, val):
+        """Defines Scheme variable to have value."""
+        frame = self.frames.first
+        frame.add_binding(var, val)
+
+    def set_variable_value(self, var, val):
+        """Set Scheme variable to have value."""
+        def env_loop(frames):
+            # 空表
+            if self.pprocs.is_scheme_null(frames):
+                raise self.pprocs.SchemeError(
+                    "Unbound variable: {0}".format(var))
+            frame = frames.first
+            if var in frame.bindings.keys():
+                frame.set_var(var, val)
+                return
+            else:
+                env_loop(frames.rest)
+
+        env_loop(self.frames)
+
+    def __repr__(self):
+        def env_loop_repr(frames):
+            # If there is no enclosing environment
+            if self.pprocs.is_scheme_null(frames.rest):
+                return "{Global Frame}"
+            else:
+                frame = frames.first
+                return repr(frame) + " -> " + env_loop_repr(frames.rest)
+        return env_loop_repr(self.frames)
+
 ##############################
 #         Procedures         #
 ##############################
@@ -259,9 +259,6 @@ class PrimitiveProcedure(Procedure):
         self.name = name
         self.fn = fn
         self.use_env = use_env
-
-    def __str__(self):
-        return "#[{0}]".format(self.name)
 
     def apply(self, arguments, env):
         """Applies `self` to `arguments` in Frame `env`, where `arguments` is a
@@ -292,6 +289,9 @@ class PrimitiveProcedure(Procedure):
             return []
         else:
             return [arguments.first] + self.flatten(arguments.rest)
+
+    def __str__(self):
+        return "#[{0}]".format(self.name)
 
 
 class LambdaProcedure(Procedure):
