@@ -669,9 +669,10 @@ def eval_cons_stream(expr, env):
 ##############################
 
 
-def complete_apply(procedure, args, env):
-    """Apply procedure to args in env; ensure the result is not a Thunk."""
-    val = scheme_apply(procedure, args, env)
+def complete_apply(procedure, arguments, env):
+    """Apply procedure to arguments in env; ensure the result is not a
+    TailPromise."""
+    val = scheme_apply(procedure, arguments, env)
     if isinstance(val, TailPromise):
         return scheme_eval(val.expr, val.env)
     else:
@@ -686,20 +687,22 @@ def optimize_tail_calls(original_scheme_eval):
         If `tail`, return a Promise containing an expression for further
         evaluation.
         """
-        # If tail is True and not expression is not self-evaluated,
-        # return Promise directly, this is because a call to
-        # `original_scheme_eval` causes the recursion depth to increase by 1.
-        # Note that for `optimized_eval`, argument `tail` defaults to False,
-        # which means that it is impossible to return Promise at the first,
-        # call, that is, when the recursion depth is 1
+        # If tail is True and the expression is not variable or self-evaluated,
+        # return Promise directly, Note that for `optimized_eval`, argument
+        # `tail` defaults to False, which means that it is impossible to
+        # return Promise at the first call, that is, when the recursion depth
+        # is 1
         if tail and not is_scheme_variable(expr) and not is_self_evaluating(
                 expr):
             return TailPromise(expr, env)
 
-        # If tail is False or the expression is not self-evaluated, it will be
+        # If tail is False or the expression is variable or self-evaluated (
+        # which includes the first call of `scheme_eval`), it will be
         # evaluated until the actual value is obtained (instead of Promise)
         result = TailPromise(expr, env)
         while (isinstance(result, TailPromise)):
+            # A call to `original_scheme_eval` actually can simulate the
+            # recursion depth plus one.
             result = original_scheme_eval(result.expr, result.env)
         return result
 
