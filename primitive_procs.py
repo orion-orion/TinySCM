@@ -41,8 +41,6 @@ def validate_type(val, predicate, k, name):
     if not predicate(val):
         msg = "argument {0} of {1} has wrong type ({2})"
         type_name = type(val).__name__
-        if (val):
-            type_name = "symbol"
         raise SchemeError(msg.format(k, name, type_name))
     return val
 
