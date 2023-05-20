@@ -590,15 +590,10 @@ def scheme_reduce(op, items, env):
 def scheme_force(obj):
     """Note that `force` is a primitive procedure, not a special form
     """
-    from internal_ds import Promise
     from eval_apply import scheme_eval
 
-    def scheme_force_it(obj):
-        if isinstance(obj, Promise):
-            return scheme_force_it(scheme_eval(obj.expr, obj.env))
-        else:
-            return obj
-    return scheme_force_it(obj)
+    validate_type(obj, lambda x: is_scheme_promise(x), 0, "stream-force")
+    return scheme_eval(obj.expr, obj.env)
 
 
 @primitive("stream-car")
