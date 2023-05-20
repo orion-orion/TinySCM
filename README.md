@@ -148,9 +148,9 @@ scm> (stream-enumerate-interval 10000 10005)
 `strean-cdr`定义为`(define (stream-cdr stream) (force (cdr stream)))`，也即选取有关序对的`cdr`部分，并求值这里的延时表达式，以获得这个流的后面部分。示例如下：
 
 ```scheme
-scm> (force (stream-cdr (stream-enumerate-interval 10000 10005)))
+scm> (stream-cdr (stream-enumerate-interval 10000 10005))
 (10001 . #[promise (not forced)])
-scm> (force (stream-cdr (force (stream-cdr (stream-enumerate-interval 10000 10005)))))
+scm> (stream-cdr (stream-cdr (stream-enumerate-interval 10000 10005)))
 (10002 . #[promise (not forced)])
 ```
 
