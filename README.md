@@ -41,7 +41,7 @@
 
 具体地，我们实现的`scheme_eval`和`scheme_apply`这两个主函数（分别对应Scheme中的`eval`和`apply`这两个原始过程（primitive procedures））实现可参见`eval_apply.py`文件。
 
->在**元语言抽象（metalinguistic abstraction）** 的模型下，数据和程序本无分别，它们就如同咬住自己尾巴的衔尾蛇，可以互相转换，生生不息。我们将程序看做是一种抽象的（可能无穷大的）机器的一个表述，那么解释器就可以看做是一部非常特殊的机器，它要求以一部机器的描述作为输入，并模拟被描述机器的执行过程。按照这一观点，任一解释器都能模拟其它的解释器。
+>在**元语言抽象（metalinguistic abstraction）** 的模型下，数据和程序本无分别，它们就如同咬住自己尾巴的[**衔尾蛇（ouroboros）**](https://en.wikipedia.org/wiki/Ouroboros)。我们将程序看做是一种抽象的（可能无穷大的）机器的一个表述，那么解释器就可以看做是一部非常特殊的机器，它要求以一部机器的描述作为输入，并模拟被描述机器的执行过程。按照这一观点，任一解释器都能模拟其它的解释器。事实上，任何“有效过程”都可以描述为图灵机的一个程序，这一论断就是著名的[**邱奇—图灵论题（Church–Turing thesis）**](https://en.wikipedia.org/wiki/Church%E2%80%93Turing_thesis)。
 
 ## 2 环境依赖
 
@@ -132,43 +132,38 @@ x
 
 在TinySCM中，我们流的实现基于一种称为`delay`的特殊形式，对于`(delay <expr>)`的求值将不会对表达式`<expr>`求值，而是返回一个称为延时对象的Promise对象，它可以看做是对在未来的某个时间求值`expr`的允诺。和`delay`一起的还有一个称为`force`的基本过程，它以一个延时对象为参数，执行相应的求值工作，也即迫使`delay`完成它所允诺的求值。
 
-`stream-cons`是一个特殊形式，其定义`cons-stream <x> <y>`等价于`(cons <x> (delay <y>))`，这就表达式我们将用序对来构造流。示例如下：
+`stream-cons`是一个特殊形式，其定义`cons-stream <x> <y>`等价于`(cons <x> (delay <y>))`，这就表示我们将用序对来构造流。示例如下：
 
 ```scheme
-scm>  (define (stream-enumerate-interval low high)
+scm> (define (stream-enumerate-interval low high)
         (if (> low high)
             nil
-             (cons-stream
-              low
-              (stream-enumerate-interval (+ low 1) high))))
+            (cons-stream
+            low
+            (stream-enumerate-interval (+ low 1) high))))
 stream-enumerate-interval
-scm> (stream-enumerate-interval 10000 10005)
+scm> (define integers (stream-enumerate-interval 10000 1000000))
+integers
+scm> integers
 (10000 . #[promise (not forced)])
 ```
-`strean-cdr`定义为`(define (stream-cdr stream) (force (cdr stream)))`，也即选取有关序对的`cdr`部分，并求值这里的延时表达式，以获得这个流的后面部分。示例如下：
+`stream-cdr`实际上等价于`(define (stream-cdr stream) (force (cdr stream)))`，也即选取有关序对的`cdr`部分，并求值这里的延时表达式，以获得这个流的后面部分。示例如下：
 
 ```scheme
-scm> (stream-cdr (stream-enumerate-interval 10000 10005))
+scm> (stream-cdr integers)
 (10001 . #[promise (not forced)])
-scm> (stream-cdr (stream-cdr (stream-enumerate-interval 10000 10005)))
+scm> (stream-cdr (stream-cdr integers))
 (10002 . #[promise (not forced)])
 ```
 
 同样，`map`/`reduce`/`filter`算子也可以作用于流：
 
 ```scheme
-scm>  (define (stream-enumerate-interval low high)
-                                 (if (> low high)
-                                         nil
-                                         (cons-stream
-                                          low
-                                          (stream-enumerate-interval (+ low 1) high))))
-stream-enumerate-interval
-scm> (stream-map (lambda (x) (* 2 x))  (stream-enumerate-interval 10000 10005))
-(20000 20002 20004 20006 20008 20010)
+scm> (stream-map (lambda (x) (* 2 x))  (stream-enumerate-interval 1 10))
+(2 4 6 8 10 12 14 16 18 20)
 ```
 
-按照Scheme标准，流经过`map`/`reduce`/`filter`算子作用得到的也应该是一个惰性的流，不过我们这里做出了简化，直接将其完全求值了。
+按照Scheme标准，流经过`map`/`reduce`/`filter`算子作用得到的也应该是一个惰性的流，不过我们这里做出了简化，直接将其进行急切求值了。
 
 
 **尾递归**
@@ -179,11 +174,11 @@ scm> (stream-map (lambda (x) (* 2 x))  (stream-enumerate-interval 10000 10005))
 
 ```scheme
 scm> (define (sum n total)
-       (if (zero? n) total
-         (sum (- n 1) (+ n total))))
+            (if (zero? n) total
+              (sum (- n 1) (+ n total))))
 sum
-scm> (sum 1001 0)
-501501
+scm> (sum 1000001 0)
+500001500001
 ```
 
 ## 3.2 打印表达式的抽象语法树
